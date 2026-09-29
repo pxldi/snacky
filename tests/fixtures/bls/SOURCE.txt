@@ -1,0 +1,4 @@
+BLS_4_0_Daten_2025_DE_sample.xlsx holds 44 rows copied unchanged from
+BLS_4_0_Daten_2025_DE.xlsx in https://blsdb.de/assets/uploads/BLS_4_0_2025_DE.zip
+(Bundeslebensmittelschluessel 4.0, Max Rubner-Institut, DOI 10.25826/Data20251217-134202-0),
+licence CC BY 4.0. Same header row and columns as the original.
