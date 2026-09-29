@@ -13,8 +13,8 @@
           "r1"
         ],
         "routineId": "r1",
-        "name": "Push A",
-        "bw": 80.0,
+        "name": "Session A",
+        "bw": 64.0,
         "entries": [
           {
             "id": "bench",
@@ -40,8 +40,8 @@
           "r1"
         ],
         "routineId": "r1",
-        "name": "Pull A",
-        "bw": 80.0,
+        "name": "Session B",
+        "bw": 64.0,
         "entries": [
           {
             "id": "bench",
@@ -67,8 +67,8 @@
           "r1"
         ],
         "routineId": "r1",
-        "name": "Legs",
-        "bw": 80.0,
+        "name": "Session C",
+        "bw": 64.0,
         "entries": [
           {
             "id": "bench",
@@ -94,8 +94,8 @@
           "r1"
         ],
         "routineId": "r1",
-        "name": "Late Push",
-        "bw": 80.0,
+        "name": "Session D",
+        "bw": 64.0,
         "entries": [
           {
             "id": "bench",
@@ -121,8 +121,8 @@
           "r1"
         ],
         "routineId": "r1",
-        "name": "Night Pull",
-        "bw": 80.0,
+        "name": "Session E",
+        "bw": 64.0,
         "entries": [
           {
             "id": "bench",
@@ -149,7 +149,7 @@
         ],
         "routineId": "r1",
         "name": "Unfinished",
-        "bw": 80.0,
+        "bw": 64.0,
         "entries": [
           {
             "id": "bench",
@@ -174,8 +174,8 @@
           "r1"
         ],
         "routineId": "r1",
-        "name": "Last Day",
-        "bw": 80.0,
+        "name": "Session F",
+        "bw": 64.0,
         "entries": [
           {
             "id": "bench",
@@ -202,7 +202,7 @@
         ],
         "routineId": "r1",
         "name": "Excluded",
-        "bw": 80.0,
+        "bw": 64.0,
         "entries": [
           {
             "id": "bench",
@@ -224,7 +224,7 @@
     "routines": [
       {
         "id": "r1",
-        "name": "Push A",
+        "name": "Session A",
         "ex": []
       }
     ],
@@ -235,27 +235,27 @@
     "bodyweight": [
       {
         "d": "2026-08-09",
-        "w": 80.4,
+        "w": 64.4,
         "t": 1786251600000
       },
       {
         "d": "2026-08-10",
-        "w": 80.0,
+        "w": 64.0,
         "t": 1786338000000
       },
       {
         "d": "2026-08-15",
-        "w": 79.6,
+        "w": 63.6,
         "t": 1786770000000
       },
       {
         "d": "2026-08-30",
-        "w": 79.2,
+        "w": 63.2,
         "t": 1788066000000
       },
       {
         "d": "2026-08-31",
-        "w": 79.0,
+        "w": 63.0,
         "t": 1788152400000
       }
     ],
