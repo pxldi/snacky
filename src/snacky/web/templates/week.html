@@ -3,25 +3,26 @@
 {% block strip %}<p class="strip-note">{{ start.day }}.{{ start.month }}. bis {{ end.day }}.{{ end.month }}.{{ end.year }}</p>{% endblock %}
 
 {% block content %}
-{% if counted_days == 0 %}{% set share = 0 %}{% elif has_goal %}{% set share = met_count / counted_days %}{% else %}{% set share = 0 %}{% endif %}
 <div class="split">
   <div class="pack-col">
-    <section class="front front-week" data-state="{{ 'met' if has_goal and counted_days and met_count == counted_days else 'open' }}" aria-labelledby="claim">
-      {{ p.fill(share) }}
+    <section class="front front-week" data-state="{{ 'met' if has_goal and hero.days and hero.fraction >= 1 else 'open' }}" aria-labelledby="claim">
+      {{ p.fill(hero.fraction) }}
       <h1 class="claim" id="claim">
         <span class="sr">Woche: </span>
-        {% if counted_days == 0 %}
-        <span class="claim-word claim-word-lg">Woche noch nicht angefangen</span>
-        {% elif has_goal %}
-        <span class="claim-num">{{ met_count }}<span class="claim-of">von</span>{{ counted_days }}</span>
-        <span class="claim-word">Tagen geschafft</span>
-        {% elif average is none %}
-        <span class="claim-word claim-word-lg">Noch nichts eingetragen</span>
+        {% if average is none %}
+        <span class="claim-word claim-word-lg">{% if started %}Noch nichts eingetragen{% else %}Woche noch nicht angefangen{% endif %}</span>
+        {% elif hero.days == 0 %}
+        <span class="claim-word claim-word-lg">Die Woche läuft</span>
         {% else %}
-        <span class="claim-num">{{ average|num }}<span class="claim-unit">g</span></span>
-        <span class="claim-word">Protein im Schnitt</span>
+        <span class="claim-num">{{ hero.logged }}<span class="claim-of">von</span>{{ hero.days }}</span>
+        <span class="claim-word">Tagen dabei</span>
         {% endif %}
       </h1>
+      {% if average is not none and hero.days > 0 and hero.average is not none %}
+      <p class="claim-line">Ø {{ hero.average|num }}{% if hero.goal %} von {{ hero.goal|num }}{% endif %}&nbsp;g Protein</p>
+      {% elif average is not none %}
+      <p class="claim-line">Ø {{ average|num }}&nbsp;g Protein bisher</p>
+      {% endif %}
       {% if opengym_failed %}
       <p class="claim-fine">Die Trainingstage konnten nicht von openGym geladen werden.</p>
       {% endif %}
@@ -33,30 +34,28 @@
     <p class="panel-sub">{{ start.day }}.{{ start.month }}. bis {{ end.day }}.{{ end.month }}.{{ end.year }}</p>
     <ol class="rows tbl wk">
       {% for r in rows %}
-      {% set gap = (r.goal - r.protein) if r.goal else 0 %}
+      {% set of_goal = r.has_goal and r.goal %}
       <li>
-        <a class="wrow wrow-{{ r.state }}" href="/?day={{ r.day.isoformat() }}">
+        <a class="wrow wrow-{{ r.state }}" href="/?day={{ r.day.isoformat() }}"
+           aria-label="{{ date_short(r.day) }}{% if r.state == 'today' %}, heute{% endif %}{% if r.state == 'future' %}, noch nicht eingetragen{% elif r.count == 0 %}, nichts eingetragen{% else %}, {{ r.protein|num }}{% if of_goal %} von {{ r.goal|num }}{% endif %} g{% endif %}{% if r.met and r.state in ('met', 'today') %}, geschafft{% endif %}{% for w in r.training %}, Training{% endfor %}">
           <span class="w-day">{{ date_short(r.day) }}{% if r.state == "today" %} <span class="tag-today">Heute</span>{% endif %}</span>
           <span class="w-status">
             {% if r.met and r.state in ("met", "today") %}{{ p.check() }}<span>geschafft</span>
-            {% elif r.state == "missed" %}<span>{{ gap|num }}&nbsp;g darunter</span>
-            {% elif r.state == "today" and r.has_goal and r.count %}<span>noch {{ gap|num }}&nbsp;g</span>
             {% elif r.state == "empty" or (r.state == "today" and not r.count) %}<span>nichts eingetragen</span>
             {% endif %}
           </span>
           {% if r.state != "future" %}
-          <svg class="w-bar" viewBox="0 0 100 10" preserveAspectRatio="none" role="img"
-               aria-label="{{ r.protein|num }} g Protein{% if r.has_goal %}, Ziel {{ r.limit|num }} g{% endif %}">
+          <svg class="w-bar" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true" focusable="false">
             <rect class="track" width="100" height="10"/>
             <rect class="bar" width="{{ '%.2f'|format(r.fill) }}" height="10"/>
             {% if r.goal_x is not none %}
             <line class="tick" x1="{{ '%.2f'|format(r.goal_x) }}" x2="{{ '%.2f'|format(r.goal_x) }}" y1="0" y2="10"/>
             {% endif %}
           </svg>
-          <span class="w-protein">{{ r.protein|num }}&nbsp;g</span>
+          <span class="w-protein"><span class="w-num">{{ r.protein|num }}</span>{% if of_goal %}<span class="w-of"> von {{ r.goal|num }}</span>{% endif %}&nbsp;g</span>
           <span class="w-kcal">{{ r.kcal|num }}&nbsp;kcal</span>
           {% else %}
-          <span class="w-protein">–<span class="sr"> noch nicht eingetragen</span></span>
+          <span class="w-protein">–</span>
           {% endif %}
           {% if r.training %}
           <span class="w-train">{% for w in r.training %}<span class="tag-train">Training</span>{% if w.name %} <span class="w-workout">{{ w.name }}</span>{% endif %}{% endfor %}</span>

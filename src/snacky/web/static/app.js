@@ -43,3 +43,10 @@ for (const form of document.querySelectorAll("form.result")) {
     show("[data-out-kcal]", (grams * kcal100) / 100, 0);
   });
 }
+
+// After a log the fill starts from the share it had before, so the rise shows
+// what the entry added. Set through CSSOM: the content-security policy allows
+// that but not a style attribute.
+for (const rect of document.querySelectorAll(".fill[data-from]")) {
+  rect.style.setProperty("--from", rect.dataset.from);
+}

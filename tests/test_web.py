@@ -142,7 +142,7 @@ def test_day_page_with_data(client, seeded):
     assert "2.200–2.600" in page
     assert "Tofu natur" in page and "250\u00a0g" in page and "Open Food Facts" in page
     assert "Pasta im Restaurant" in page
-    assert "geschätzt (niedrig)" in page and "≈ 24\u00a0g" in page
+    assert "geschätzt, unsicher" in page and "≈ 24\u00a0g" in page
     assert "davon ≈&nbsp;47&nbsp;% des Proteins geschätzt" in page  # 24 of 51.5 g protein
     assert "erreicht" not in page and "unter&nbsp;" not in page  # no per-meal target without the env var
 
@@ -157,7 +157,7 @@ def test_estimate_marker_for_medium_confidence(client, store):
         grams=100,
         confidence=Confidence.MEDIUM,
     )
-    assert "geschätzt (mittel)" in client.get("/").text
+    assert "geschätzt, eher sicher" in client.get("/").text
 
 
 def test_no_estimate_marker_for_high_confidence(client, store):
@@ -344,7 +344,7 @@ def test_quick_buttons_on_today(client, store, food):
     store.add_quick_item(food.id, 250, "Tofu")
     page = client.get("/").text
     assert "+27,5&nbsp;g" in page and "/quick/1/log" in page
-    assert 'aria-label="Tofu, 250 g, eintragen"' in page
+    assert 'aria-label="Tofu, 250 g, +27,5 g Protein, eintragen"' in page
 
 
 def test_quick_log_unknown_item(writer):

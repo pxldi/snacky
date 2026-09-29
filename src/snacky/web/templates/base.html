@@ -12,6 +12,7 @@
   <script src="/static/app.js" defer></script>
 </head>
 <body>
+  <a class="skip" href="#main">Zum Inhalt</a>
 {% import "_parts.html" as p %}
   <header class="site">
     <div class="site-inner">
@@ -25,7 +26,7 @@
     </div>
   </header>
   {% block notice %}{% endblock %}
-  <main>
+  <main id="main">
     {% block content %}{% endblock %}
   </main>
   {% block fine %}{% endblock %}

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Schnellwahl · Snacky{% endblock %}
+{% block title %}{% if undo %}Eingetragen: {{ undo.name }} · Snacky{% else %}Schnellwahl · Snacky{% endif %}{% endblock %}
 
 {% block notice %}
 {% if undo %}

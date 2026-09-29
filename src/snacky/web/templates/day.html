@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ date_long(day) }} · Snacky{% endblock %}
+{% block title %}{% if undo %}Eingetragen: {{ undo.name }} · Snacky{% else %}{{ date_long(day) }} · Snacky{% endif %}{% endblock %}
 {% block strip %}<p class="strip-note">{{ date_long(day) }}</p>{% endblock %}
 
 {% block notice %}
@@ -19,12 +19,10 @@
 <div class="split">
   <div class="pack-col">
     <section class="front{{ '' if is_today else ' front-past' }}" data-state="{{ st }}" aria-labelledby="claim">
-      {% if st != "nogoal" %}
-      <div class="front-cap"><p class="cap-label"><span class="caps">Ziel</span> {{ protein.limit|num }}&nbsp;g</p></div>
-      {{ p.fill(protein.fraction) }}
-      {% else %}
-      {{ p.fill(0) }}
+      {% if st != "nogoal" or not is_today %}
+      <div class="front-cap"><p class="cap-label">{% if not is_today %}<span class="caps">{{ date_short(day)|replace(",", "") }}{% if st != "nogoal" %} · Ziel{% endif %}</span>{% else %}<span class="caps">Ziel</span>{% endif %}{% if st != "nogoal" %} {{ protein.limit|num }}&nbsp;g{% endif %}</p></div>
       {% endif %}
+      {{ p.fill(protein.fraction if st != "nogoal" else 0, fill_from) }}
 
       {% if st == "open" %}
       <div class="sticker"><span class="sticker-top">Noch</span><span class="sticker-num">{{ protein.gap|num }}<small>&nbsp;g</small></span></div>
@@ -41,6 +39,9 @@
         <span class="claim-num">{{ summary.totals.protein_g|num }}<span class="claim-unit">g</span></span>
         <span class="claim-word">Protein</span>
       </h1>
+      {% if training %}
+      <p class="claim-line claim-tags"><span class="tag-train">Training</span>{% for w in training %}{% if w.name %} {{ w.name }}{% endif %}{% endfor %}</p>
+      {% endif %}
       {% if protein_estimated_share > 0 %}
       <p class="claim-fine">davon ≈&nbsp;{{ (protein_estimated_share * 100)|num }}&nbsp;% des Proteins geschätzt</p>
       {% endif %}
@@ -75,7 +76,6 @@
 
   <section class="panel" aria-labelledby="panel-h">
     <h2 id="panel-h">Nährwerte</h2>
-    <p class="panel-sub">{{ date_long(day) }}</p>
     <div class="tbl">
       {% if not meals %}
       <p class="empty">{% if is_today %}Noch nichts drin. Schreib Clanky, was du gegessen hast.{% else %}An diesem Tag wurde nichts eingetragen.{% endif %}</p>
@@ -97,12 +97,13 @@
               <span class="row-main">
                 <span class="row-name">{{ e.name }}</span>
                 <span class="row-meta">{{ amount_label(e) }}{% if amount_label(e) and e.source != AI_ESTIMATE %} · {% endif %}{% if e.source != AI_ESTIMATE %}{{ SOURCE_LABELS[e.source] }}{% endif %}</span>
-                {% if est %}<span class="row-meta">geschätzt{% if e.confidence and e.confidence.value != "high" %} ({{ CONFIDENCE_LABELS[e.confidence] }}){% endif %}</span>{% endif %}
+                {% if est %}<span class="row-meta">geschätzt{% if e.confidence and e.confidence.value == "low" %}, unsicher{% elif e.confidence and e.confidence.value == "medium" %}, eher sicher{% endif %}</span>{% endif %}
               </span>
               <span class="row-nums">
                 <span class="row-p{{ ' est' if est }}">{{ protein_label(e) }}</span>
                 <span class="row-k">{{ e.nutrients.kcal|num }}&nbsp;kcal</span>
               </span>
+              {{ p.chevron() }}
             </a>
           </li>
           {% endfor %}
@@ -112,7 +113,7 @@
       <div class="total">
         <p class="total-label">Summe</p>
         <p class="total-p">{{ summary.totals.protein_g|num }}&nbsp;g</p>
-        <p class="total-gap">{% if st != "nogoal" %}{{ protein.gap_text|upfirst }}{% endif %}</p>
+        <p class="total-gap">{% if st == "missed" %}{{ protein.gap|num }}&nbsp;g unter Ziel{% elif st != "nogoal" %}{{ protein.gap_text|upfirst }}{% endif %}</p>
         <p class="total-k">{{ summary.totals.kcal|num }}&nbsp;kcal</p>
       </div>
     </div>

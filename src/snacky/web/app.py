@@ -238,6 +238,12 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
             if protein["state"] == "open":
                 fmt.gap_closer(quick, protein["gap"])
         undo = undo_entry(request)
+        # Where the fill starts after a log, so it reads 97 -> 107, not 0 -> 107.
+        fill_from = None
+        if undo is not None and protein["limit"] and undo.eaten_at.date() == day and protein["fraction"] > 0:
+            before = max(protein["eaten"] - undo.nutrients.protein_g, 0.0) / protein["limit"]
+            fill_from = min(before / protein["fraction"], 1.0)
+        workouts, _ = await _training(day, day + timedelta(days=1))
         return render(
             request,
             "day.html",
@@ -256,6 +262,8 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
             meal_min=meal_min,
             quick=quick,
             undo=undo,
+            fill_from=fill_from,
+            training=workouts.get(day, []),
         )
 
     async def week_page(request: Request) -> Response:
@@ -271,6 +279,19 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
             row["state"] = _week_state(row, today)
         logged = [r["protein"] for r in rows if r["kcal"] > 0]
         counted = [r for r in rows if r["day"] <= today]
+        # The hero counts finished days, and today only once it is met, so an
+        # unfinished day never reads as a miss.
+        done = [r for r in rows if r["day"] < today or (r["day"] == today and r["met"])]
+        goal_days = [r for r in done if r["goal"]]
+        goal_sum = sum(r["goal"] for r in goal_days)
+        shown = [r for r in done if r["count"] > 0]
+        hero = {
+            "days": len(done),
+            "logged": len(shown),
+            "fraction": min(sum(r["protein"] for r in goal_days) / goal_sum, 1.0) if goal_sum else 0.0,
+            "average": sum(r["protein"] for r in shown) / len(shown) if shown else None,
+            "goal": goal_days[-1]["goal"] if goal_days else None,
+        }
         return render(
             request,
             "week.html",
@@ -283,6 +304,8 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
             average=sum(logged) / len(logged) if logged else None,
             met_count=sum(1 for r in counted if r["met"]),
             counted_days=len(counted),
+            hero=hero,
+            started=start <= today,
             has_goal=any(r["has_goal"] for r in rows),
             nav_current="week",
             opengym_failed=failed,
@@ -321,19 +344,22 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
                     "count": count,
                 }
             )
-        workouts: dict[date, list] = {}
-        failed = False
-        if opengym is not None:
-            try:
-                found = await asyncio.wait_for(
-                    opengym.workouts_between(start, start + timedelta(days=7)), _OPENGYM_TIMEOUT_S
-                )
-                for workout in found:
-                    workouts.setdefault(workout.day, []).append(workout)
-            except Exception:
-                # Training markers are a nicety; the week must render without them.
-                failed = True
+        workouts, failed = await _training(start, start + timedelta(days=7))
         return rows, workouts, failed
+
+    async def _training(start: date, end: date) -> tuple[dict[date, list], bool]:
+        """Workouts from openGym by day. Training markers are a nicety, so a
+        slow or failing server must never break the page: it reports failed."""
+        workouts: dict[date, list] = {}
+        if opengym is None:
+            return workouts, False
+        try:
+            found = await asyncio.wait_for(opengym.workouts_between(start, end), _OPENGYM_TIMEOUT_S)
+        except Exception:
+            return workouts, True
+        for workout in found:
+            workouts.setdefault(workout.day, []).append(workout)
+        return workouts, False
 
     async def entry_page(request: Request) -> Response:
         entry = store.get_entry(request.path_params["entry_id"])

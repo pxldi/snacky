@@ -124,8 +124,8 @@ def test_coupon_names_the_verb_and_flags_the_gap_closer(client, store):
     for protein in (10, 30, 50):
         add_quick(store, protein)
     page = client.get("/").text
-    assert 'aria-label="Riegel 10, 100 g, eintragen"' in page
-    assert 'aria-label="Riegel 30, 100 g, eintragen, schließt die Lücke"' in page
+    assert 'aria-label="Riegel 10, 100 g, +10 g Protein, eintragen"' in page
+    assert 'aria-label="Riegel 30, 100 g, +30 g Protein, eintragen, schließt die Lücke"' in page
     assert page.count("schließt die Lücke</span>") == 1
     assert "+30&nbsp;g" in page
 
@@ -186,10 +186,14 @@ def test_week_headline_and_row_states(client, store):
     eat(store, TODAY - timedelta(days=1), 120)  # Monday, met
     eat(store, TODAY, 40)  # today, open
     page = client.get("/week").text
-    assert 'claim-num">1<span class="claim-of">von</span>2' in page and "Tagen geschafft" in page
+    # Monday counts, today does not until it is met.
+    assert 'claim-num">1<span class="claim-of">von</span>1' in page and "Tagen dabei" in page
+    assert "Ø 120 von 100&nbsp;g Protein" in page
     assert "geschafft</span>" in page and "Heute</span>" in page
-    assert "noch 60&nbsp;g" in page
-    assert "–<span" in page  # future days
+    assert '<span class="w-num">40</span><span class="w-of"> von 100</span>&nbsp;g' in page
+    assert 'aria-label="Mo, 28.9., 120 von 100 g, geschafft"' in page
+    assert "darunter" not in page
+    assert '<span class="w-protein">–</span>' in page  # future days
 
 
 def test_future_week_says_it_has_not_started(client):
@@ -275,3 +279,172 @@ def test_units_are_not_upper_cased(client):
     for selector in (".row-meta", ".coupon-amount", ".mtag"):
         block = css[css.index(selector + " {") :].split("}")[0]
         assert "text-transform" not in block, selector
+
+
+def week_hero(client, contexts, start=None):
+    contexts.clear()
+    client.get("/week" if start is None else f"/week?start={start}")
+    return next(ctx for name, ctx in contexts if name == "week.html")["hero"]
+
+
+@pytest.fixture
+def contexts(monkeypatch):
+    import jinja2
+
+    seen = []
+    original = jinja2.Template.render
+
+    def spy(self, *args, **kwargs):
+        seen.append((self.name, kwargs))
+        return original(self, *args, **kwargs)
+
+    monkeypatch.setattr(jinja2.Template, "render", spy)
+    return seen
+
+
+def test_hero_current_week_leaves_out_an_unmet_today(client, store, contexts):
+    eat(store, date(2026, 9, 28), 60)
+    eat(store, TODAY, 90)
+    hero = week_hero(client, contexts)
+    assert (hero["days"], hero["logged"], hero["fraction"], hero["average"], hero["goal"]) == (
+        1,
+        1,
+        0.6,
+        60,
+        100,
+    )
+
+
+def test_hero_counts_today_once_it_is_met(client, store, contexts):
+    eat(store, date(2026, 9, 28), 60)
+    eat(store, TODAY, 100)
+    hero = week_hero(client, contexts)
+    assert (hero["days"], hero["logged"], hero["fraction"], hero["average"]) == (2, 2, 0.8, 80)
+
+
+def test_hero_past_week_counts_empty_days_in_the_fill_but_not_the_average(client, store, contexts):
+    eat(store, date(2026, 9, 21), 100)
+    eat(store, date(2026, 9, 22), 50)
+    hero = week_hero(client, contexts, "2026-09-21")
+    assert (hero["days"], hero["logged"], hero["average"]) == (7, 2, 75)
+    assert hero["fraction"] == pytest.approx(150 / 700)
+
+
+def test_hero_future_week_is_empty(client, contexts):
+    hero = week_hero(client, contexts, "2026-10-05")
+    assert (hero["days"], hero["logged"], hero["fraction"], hero["average"], hero["goal"]) == (
+        0,
+        0,
+        0.0,
+        None,
+        None,
+    )
+    assert "Woche noch nicht angefangen" in client.get("/week?start=2026-10-05").text
+
+
+def test_hero_without_goals_shows_days_and_average_only(contexts):
+    s = Store(":memory:")
+    try:
+        eat(s, date(2026, 9, 28), 50)
+        client = TestClient(create_app(s))
+        hero = week_hero(client, contexts)
+        assert (hero["days"], hero["logged"], hero["fraction"], hero["average"], hero["goal"]) == (
+            1,
+            1,
+            0.0,
+            50,
+            None,
+        )
+        page = client.get("/week").text
+        assert "Ø 50&nbsp;g Protein" in page and " von 100" not in page
+    finally:
+        s.close()
+
+
+def test_week_rows_carry_one_clean_name(client, store):
+    eat(store, date(2026, 9, 28), 154)
+    page = client.get("/week").text
+    assert 'aria-label="Mo, 28.9., 154 von 100 g, geschafft"' in page
+    assert 'role="img"' not in page
+
+
+def test_skip_link_comes_first(client):
+    page = client.get("/").text
+    assert page.index('class="skip"') < page.index("<header") and 'id="main"' in page
+
+
+def test_undo_sets_the_title_and_the_fill_start(writer_client, store):
+    eat(store, TODAY, 60)
+    entry = eat(store, TODAY, 20, hour=12, origin=Origin.UI)
+    page = writer_client.get(f"/?undo={entry.id}").text
+    assert "<title>Eingetragen: Seitan · Snacky</title>" in page
+    assert 'data-from="0.750"' in page  # 60 of 80 g before this entry
+    assert "data-from" not in writer_client.get("/").text
+
+
+@pytest.fixture
+def writer_client(store):
+    return TestClient(create_app(store), headers={"Origin": "http://testserver"})
+
+
+def test_past_front_names_the_day_in_its_cap(client, store):
+    eat(store, PAST, 70)
+    page = client.get(f"/?day={PAST.isoformat()}").text
+    assert "front-past" in page and "Di 15.9. · Ziel</span> 100&nbsp;g" in page
+    assert "front-past" not in client.get("/").text
+
+
+def test_missed_day_says_the_same_in_sticker_and_total(client, store):
+    eat(store, PAST, 93)
+    page = client.get(f"/?day={PAST.isoformat()}").text
+    assert page.count("7&nbsp;g unter Ziel") == 1 and "Unter Ziel" in page  # total; sticker splits the words
+    assert "Noch 7" not in page
+
+
+def test_entry_rows_have_a_chevron(client, store):
+    eat(store, TODAY, 20)
+    row = client.get("/").text.split('class="row"')[1].split("</a>")[0]
+    assert 'class="icon"' in row
+
+
+def test_estimate_confidence_wording(client, store):
+    eat(store, TODAY, 20, source=Source.AI_ESTIMATE, confidence=Confidence.LOW, servings=1, grams=None)
+    eat(store, TODAY, 20, hour=8, source=Source.LABEL, confidence=Confidence.MEDIUM)
+    page = client.get("/").text
+    assert "geschätzt, unsicher" in page and "geschätzt, eher sicher" in page
+    assert "(niedrig)" not in page
+
+
+class FakeGym:
+    def __init__(self, workouts=None, error=None):
+        self.workouts, self.error = workouts or [], error
+
+    async def workouts_between(self, start, end):
+        if self.error:
+            raise self.error
+        return [w for w in self.workouts if start <= w.day < end]
+
+
+def test_day_front_shows_a_training_tag(store):
+    from snacky.model import Workout
+
+    gym = FakeGym([Workout(TODAY, "Session A", 50)])
+    page = TestClient(create_app(store, opengym=gym)).get("/").text
+    assert 'class="tag-train">Training</span> Session A' in page
+    assert 'class="tag-train"' not in TestClient(create_app(store, opengym=FakeGym())).get("/").text
+
+
+@pytest.mark.parametrize("error", [RuntimeError("boom"), TimeoutError()])
+def test_day_page_renders_when_opengym_fails(store, error):
+    response = TestClient(create_app(store, opengym=FakeGym(error=error))).get("/")
+    assert response.status_code == 200 and "tag-train" not in response.text
+
+
+def test_day_page_without_opengym_has_no_tag(client):
+    assert "tag-train" not in client.get("/").text
+
+
+def test_stylesheet_uses_only_the_declared_type_sizes(client):
+    css = client.get("/static/app.css").text
+    body = css.split("--heavy", 1)[1]
+    assert not re.findall(r"font(?:-size)?:[^;]*?\d(?:\.\d+)?rem", body)
