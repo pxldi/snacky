@@ -16,7 +16,7 @@ from starlette.testclient import TestClient
 from snacky import config
 from snacky.lookup import Lookup
 from snacky.mcp_server import create_mcp, create_mcp_app, parse_when
-from snacky.model import Source
+from snacky.model import FoodCandidate, Nutrients, Origin, Serving, Source
 from snacky.sources import opengym as opengym_module
 from snacky.sources.bls import BlsIndex, build
 from snacky.sources.off import OffClient
@@ -124,6 +124,9 @@ async def test_all_tools_are_listed_with_argument_descriptions(mcp):
             "delete_entry",
             "set_goal",
             "add_serving",
+            "suggest_foods",
+            "log_again",
+            "recipe_nutrition",
         ]
     )
     for tool in tools:
@@ -636,3 +639,162 @@ async def test_add_serving_updates_the_same_label(mcp):
 async def test_an_unexpected_off_status_is_a_readable_error(mcp):
     respx.get(f"{OFF}/api/v2/product/4000000000777.json").respond(403)
     await fails(mcp, "log_barcode", "403", barcode="4000000000777", grams=10)
+
+
+# --- suggest_foods -----------------------------------------------------------
+
+
+def stock(store, name, kcal, protein, *, servings=()):
+    return store.upsert_food(
+        FoodCandidate(
+            name=name, source=Source.MANUAL, per_100g=Nutrients(kcal, protein, 1, 5), servings=servings
+        )
+    )
+
+
+def eat(store, food, grams, days_ago=1):
+    return store.log_entry(
+        name=food.name,
+        nutrients=food.per_100g.for_grams(grams),
+        eaten_at=NOW - timedelta(days=days_ago),
+        source=food.source,
+        origin=Origin.CHAT,
+        grams=grams,
+        food_id=food.id,
+    )
+
+
+async def test_suggest_foods_with_no_history_is_empty_and_says_so(mcp):
+    out = await call(mcp, "suggest_foods", protein_g=30)
+    assert out["suggestions"] == []
+    assert "nothing to suggest" in out["note"]
+
+
+async def test_suggest_foods_ranks_by_frequency_and_density_with_usual_portion(mcp, store):
+    tofu = stock(store, "Smoked Tofu", 150, 15, servings=(Serving("1 Block", 200),))
+    lentils = stock(store, "Red Lentils", 350, 25)
+    rice = stock(store, "White Rice", 350, 7)
+    for grams in (180, 200, 220):
+        eat(store, tofu, grams)
+    eat(store, lentils, 60)
+    eat(store, rice, 80)
+    out = await call(mcp, "suggest_foods", protein_g=40)
+    assert [s["name"] for s in out["suggestions"]] == ["Smoked Tofu", "Red Lentils", "White Rice"]
+    top = out["suggestions"][0]
+    assert top["ref"] == f"food:{tofu.id}" and top["times_eaten"] == 3
+    assert top["portion_g"] == 200 and top["serving"] == "1 Block"
+    assert top["kcal"] == 300 and top["protein_g"] == 30
+    assert top["closes_gap_pct"] == 75 and top["protein_per_100kcal"] == 10
+    assert out["note"] is None
+
+
+async def test_suggest_foods_ignores_old_entries_and_caps_the_share_at_100(mcp, store):
+    seitan = stock(store, "Seitan", 120, 25)
+    old = stock(store, "Chickpea Flour", 380, 22)
+    eat(store, seitan, 200)
+    eat(store, old, 100, days_ago=45)
+    out = await call(mcp, "suggest_foods", protein_g=20)
+    assert [s["name"] for s in out["suggestions"]] == ["Seitan"]
+    assert out["suggestions"][0]["closes_gap_pct"] == 100
+
+
+async def test_suggest_foods_uses_quick_items_and_respects_kcal_max(mcp, store):
+    peanuts = stock(store, "Peanut Butter", 600, 25)
+    edamame = stock(store, "Edamame", 120, 12)
+    store.add_quick_item(peanuts.id, 30, "PB spoon")
+    store.add_quick_item(edamame.id, 100, "Edamame cup")
+    out = await call(mcp, "suggest_foods", protein_g=15, kcal_max=150)
+    assert [s["name"] for s in out["suggestions"]] == ["Edamame"]
+    assert out["suggestions"][0]["portion_basis"] == "quick item"
+    assert out["suggestions"][0]["times_eaten"] == 0
+    tight = await call(mcp, "suggest_foods", protein_g=15, kcal_max=50)
+    assert tight["suggestions"] == [] and "kcal_max" in tight["note"]
+
+
+async def test_suggest_foods_respects_limit_and_skips_protein_free_foods(mcp, store):
+    for i in range(4):
+        eat(store, stock(store, f"Bean {i}", 100, 8 + i), 100)
+    eat(store, stock(store, "Sugar", 400, 0), 10)
+    out = await call(mcp, "suggest_foods", protein_g=20, limit=2)
+    assert len(out["suggestions"]) == 2
+    everything = await call(mcp, "suggest_foods", protein_g=20, limit=10)
+    assert "Sugar" not in [s["name"] for s in everything["suggestions"]]
+
+
+# --- log_again ---------------------------------------------------------------
+
+
+async def test_log_again_copies_entries_to_the_given_time(mcp, store):
+    oats = stock(store, "Oat Flakes", 370, 13)
+    soy = stock(store, "Soy Drink", 40, 3.5)
+    first = eat(store, oats, 60)
+    second = eat(store, soy, 250)
+    out = await call(mcp, "log_again", entry_ids=[first.id, second.id], eaten_at="08:00")
+    assert out["logged"] == 2
+    copies = [store.get_entry(e["id"]) for e in out["entries"]]
+    assert [c.id for c in copies] == [second.id + 1, second.id + 2]
+    assert [c.name for c in copies] == ["Oat Flakes", "Soy Drink"]
+    assert copies[0].nutrients == first.nutrients and copies[1].nutrients == second.nutrients
+    assert (copies[0].grams, copies[0].food_id, copies[0].source) == (60, oats.id, Source.MANUAL)
+    assert all(c.eaten_at == datetime(2026, 9, 29, 8, 0, tzinfo=BERLIN) for c in copies)
+    assert out["day_so_far"]["protein_g"] == round(
+        copies[0].nutrients.protein_g + copies[1].nutrients.protein_g, 1
+    )
+    assert store.get_entry(first.id) == first
+
+
+async def test_log_again_defaults_to_now_and_drops_origin_ref(mcp, store):
+    original = store.log_entry(
+        name="Chili sin Carne",
+        nutrients=Nutrients(500, 30, 10, 60),
+        eaten_at=NOW - timedelta(days=1),
+        source=Source.TANDOOR,
+        origin=Origin.TANDOOR,
+        servings=1,
+        origin_ref="tandoor-cooklog:9",
+    )
+    out = await call(mcp, "log_again", entry_ids=[original.id])
+    copy = store.get_entry(out["entries"][0]["id"])
+    assert copy.eaten_at == NOW and copy.origin_ref is None
+    assert (copy.servings, copy.source, copy.origin) == (1, Source.TANDOOR, Origin.CHAT)
+
+
+async def test_log_again_logs_nothing_when_one_id_is_unknown(mcp, store):
+    entry = eat(store, stock(store, "Oat Flakes", 370, 13), 60)
+    await fails(mcp, "log_again", "Nothing stored", entry_ids=[entry.id, 999])
+    assert len(store.entries_between(NOW - timedelta(days=3), NOW + timedelta(days=1))) == 1
+
+
+async def test_log_again_refuses_a_future_time(mcp, store):
+    entry = eat(store, stock(store, "Oat Flakes", 370, 13), 60)
+    await fails(mcp, "log_again", "future", entry_ids=[entry.id], eaten_at="2026-10-05T08:00")
+
+
+# --- recipe_nutrition --------------------------------------------------------
+
+
+@respx.mock
+async def test_recipe_nutrition_ranks_inputs_and_reports_each_recipe_alone(mcp):
+    respx.get(f"{TANDOOR}/api/property-type/").respond(json=fixture_json("tandoor", "property_types.json"))
+    respx.get(f"{TANDOOR}/api/recipe/7/").respond(json=fixture_json("tandoor", "recipe_complete.json"))
+    respx.get(f"{TANDOOR}/api/recipe/8/").respond(json=fixture_json("tandoor", "recipe_missing.json"))
+    respx.get(f"{TANDOOR}/api/recipe/9/").respond(404, json={})
+    out = await call(mcp, "recipe_nutrition", recipe_ids=[7, 8, 9, 7])
+    complete, gappy, broken = out["recipes"]
+    assert complete["recipe_id"] == 7 and complete["complete"] is True and complete["missing"] == []
+    assert complete["per_serving"]["kcal"] == 400.0
+    assert complete["protein_per_100kcal"] == round(
+        complete["per_serving"]["protein_g"] / complete["per_serving"]["kcal"] * 100, 1
+    )
+    assert gappy["complete"] is False and gappy["missing"] == ["Mystery Spice Mix", "Test Egg"]
+    assert broken["recipe_id"] == 9 and "404" in broken["error"] and "per_serving" not in broken
+
+
+@respx.mock
+async def test_recipe_nutrition_limits_and_configuration(make):
+    await fails(make(with_tandoor=False), "recipe_nutrition", "not configured", recipe_ids=[7])
+    await fails(make(), "recipe_nutrition", "at most 20", recipe_ids=list(range(1, 22)))
+    respx.get(f"{TANDOOR}/api/recipe/7/").respond(json=fixture_json("tandoor", "recipe_complete.json"))
+    respx.get(f"{TANDOOR}/api/property-type/").respond(401, json={})
+    out = await call(make(), "recipe_nutrition", recipe_ids=[7])
+    assert "401" in out["recipes"][0]["error"]

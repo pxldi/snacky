@@ -48,11 +48,26 @@ product) before Open Food Facts.
 
 `search_food`, `log_food`, `log_barcode`, `log_label`, `log_recipe_portion`,
 `log_estimate`, `day_summary`, `week_summary`, `update_entry`, `delete_entry`,
-`set_goal`, `add_serving`. Every logging result names the food's source.
+`set_goal`, `add_serving`, `suggest_foods`, `log_again`, `recipe_nutrition`. Every logging result names the food's source.
 
 `log_estimate` looks each plate item up by its `search_name` in stored foods
 and BLS first and uses the model's numbers only when nothing matches. It never
 calls Open Food Facts. The deployment puts this tool behind an approval step.
+
+`suggest_foods` takes the protein still missing and returns foods that close
+it. Candidates come only from foods logged in the last 30 days and from the
+quick items, ranked by how often they were eaten and by protein per kcal, with
+the usual portion (the median grams logged). An empty history gives an empty
+list and a note. There is no built-in food list.
+
+`log_again` copies earlier entries (by id from `day_summary`) to now or to a
+given time: their food, grams, source and snapshot nutrients. `origin_ref` is
+not copied, so a copy of a cook-log entry is a plain chat entry.
+
+`recipe_nutrition` takes up to 20 Tandoor recipe ids and returns per-serving
+kcal and protein, protein per 100 kcal, and `complete` and `missing` for each,
+so the assistant can rank recipes by protein. A recipe that fails carries its
+own `error`; the others still return.
 
 `eaten_at` is an ISO datetime, `HH:MM` or empty (now). A bare time means the
 latest such time that is not in the future, so "23:30" said at 00:20 is the
@@ -76,3 +91,13 @@ A day is judged by the goals that applied on that day.
 
 Nobody says which meal an entry belongs to. Entries less than
 `SNACKY_MEAL_GAP_MIN` minutes apart (default 90) form one meal.
+
+## Image smoke test
+
+CI builds the image once, loads it, and runs `ci/smoke-image.sh` on it before
+anything is pushed. The script starts the container with a read-only root, a
+tmpfs `/data` owned by uid 1000 and no Tandoor or openGym settings. Then
+`ci/smoke_test.py` waits for `/health`, lists the tools, searches "Tofu",
+logs 100 g, reads the day summary, and fetches the web page when port 8080
+answers. Until the web app is on main, the entry point serves MCP only and the
+web check is skipped.

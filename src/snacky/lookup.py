@@ -149,19 +149,10 @@ class Lookup:
         """The stored food with this barcode (a label reading first, then a
         cached Open Food Facts product), else Open Food Facts, stored."""
         for source in (Source.LABEL, Source.OFF):
-            found = self._stored_by_ref(source, code)
+            found = self.store.food_by_source_ref(source, code)
             if found is not None:
                 return found
         if self.off is None:
             raise LookupFailed("Open Food Facts is not configured on this server.")
         candidate = await self.off.by_barcode(code)
         return None if candidate is None else self.store.upsert_food(candidate)
-
-    def _stored_by_ref(self, source: Source, source_ref: str) -> Food | None:
-        # Store has no lookup by (source, source_ref) yet, so this reads the
-        # table through the store's own lock.
-        with self.store._read() as db:
-            row = db.execute(
-                "SELECT id FROM foods WHERE source = ? AND source_ref = ?", (source.value, source_ref)
-            ).fetchone()
-        return None if row is None else self.store.get_food(row["id"])

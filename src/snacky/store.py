@@ -327,6 +327,14 @@ class Store:
         with self._read() as db:
             return self._food(db, food_id)
 
+    def food_by_source_ref(self, source: Source, source_ref: str) -> Food | None:
+        """The stored food with this (source, source_ref), or None."""
+        with self._read() as db:
+            row = db.execute(
+                "SELECT * FROM foods WHERE source = ? AND source_ref = ?", (source.value, source_ref)
+            ).fetchone()
+            return None if row is None else self._food_from_row(db, row)
+
     def search_foods(self, query: str, limit: int = 10) -> list[Food]:
         """Search stored foods by name and brand, best match first. This is the
         first step of every lookup, so a food logged once is found again
