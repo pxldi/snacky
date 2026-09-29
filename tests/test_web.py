@@ -49,21 +49,21 @@ def store():
 def food(store):
     return store.upsert_food(
         FoodCandidate(
-            name="Skyr natur",
+            name="Tofu natur",
             source=Source.OFF,
-            per_100g=Nutrients(60, 11, 0.2, 4, 0),
+            per_100g=Nutrients(150, 11, 7, 1, 0),
             source_ref="demo-1",
-            servings=(Serving("1 Becher", 450),),
+            servings=(Serving("1 Block", 200),),
         )
     )
 
 
 @pytest.fixture
 def seeded(store, food):
-    store.set_goal(Goal("protein_g", GoalKind.MIN, date(2026, 1, 1), min=150))
+    store.set_goal(Goal("protein_g", GoalKind.MIN, date(2026, 1, 1), min=120))
     store.set_goal(Goal("kcal", GoalKind.BAND, date(2026, 1, 1), min=2200, max=2600))
     breakfast = store.log_entry(
-        name="Skyr natur",
+        name="Tofu natur",
         nutrients=food.per_100g.for_grams(250),
         eaten_at=at(TODAY, 8, 0),
         source=Source.OFF,
@@ -137,10 +137,10 @@ def test_day_page_with_data(client, seeded):
     assert "Bundeslebensmittelschlüssel 4.0, Max Rubner-Institut, CC BY 4.0" in page
     assert "Open Food Facts, ODbL" in page
     assert re.search(r'class="big">52<', page)  # 27.5 + 24 = 51.5 g protein
-    assert "mindestens 150 g" in page
-    assert "Noch 99 g" in page
+    assert "mindestens 120 g" in page
+    assert "Noch 69 g" in page
     assert "2.200–2.600" in page
-    assert "Skyr natur" in page and "250 g" in page and "Open Food Facts" in page
+    assert "Tofu natur" in page and "250 g" in page and "Open Food Facts" in page
     assert "Pasta im Restaurant" in page
     assert "Schätzung (niedrig)" in page
     assert "% der Kalorien sind geschätzt" in page
@@ -194,8 +194,8 @@ def test_day_navigation(client, seeded):
 
 
 def test_pages_have_no_inline_script_or_style(client, seeded, store):
-    store.add_quick_item(1, 100, "Skyr")
-    for path in ["/", "/week", "/quick", "/quick?q=skyr", "/entries/1", "/entries/1/delete"]:
+    store.add_quick_item(1, 100, "Tofu")
+    for path in ["/", "/week", "/quick", "/quick?q=tofu", "/entries/1", "/entries/1/delete"]:
         page = client.get(path).text
         assert " style=" not in page and "<style" not in page, path
         assert not re.search(r"<script(?![^>]*\bsrc=)", page), path
@@ -304,27 +304,27 @@ def test_delete_missing_entry(writer):
 
 
 def test_quick_add_search_and_remove(writer, store, food):
-    assert "Skyr natur" in writer.get("/quick?q=sky").text
+    assert "Tofu natur" in writer.get("/quick?q=tof").text
     assert "Nichts gefunden" in writer.get("/quick?q=zzzz").text
-    response = writer.post("/quick", data={"food_id": str(food.id), "grams": "250", "label": "Skyr"})
+    response = writer.post("/quick", data={"food_id": str(food.id), "grams": "250", "label": "Tofu"})
     assert response.status_code == 303
     (item,) = store.quick_items()
-    assert (item.label, item.grams, item.food_id) == ("Skyr", 250, food.id)
-    assert "Skyr" in writer.get("/quick").text
+    assert (item.label, item.grams, item.food_id) == ("Tofu", 250, food.id)
+    assert "Tofu" in writer.get("/quick").text
     writer.post(f"/quick/{item.id}/remove", data={})
     assert store.quick_items() == []
 
 
 def test_quick_add_defaults_label_and_rejects_bad_input(writer, store, food):
     writer.post("/quick", data={"food_id": str(food.id), "grams": "100", "label": " "})
-    assert store.quick_items()[0].label == "Skyr natur"
+    assert store.quick_items()[0].label == "Tofu natur"
     assert writer.post("/quick", data={"food_id": str(food.id), "grams": "0"}).status_code == 400
     assert writer.post("/quick", data={"food_id": "999", "grams": "10"}).status_code == 404
     assert writer.post("/quick", data={"food_id": "x", "grams": "10"}).status_code == 400
 
 
 def test_quick_log_and_undo(writer, store, food):
-    item = store.add_quick_item(food.id, 250, "Skyr")
+    item = store.add_quick_item(food.id, 250, "Tofu")
     response = writer.post(f"/quick/{item.id}/log", data={})
     assert response.status_code == 303
     (entry,) = store.entries_between(at(TODAY, 0), at(TODAY, 23, 59))
@@ -340,7 +340,7 @@ def test_quick_log_and_undo(writer, store, food):
 
 
 def test_quick_buttons_on_today(client, store, food):
-    store.add_quick_item(food.id, 250, "Skyr")
+    store.add_quick_item(food.id, 250, "Tofu")
     page = client.get("/").text
     assert "28 g" in page and "/quick/1/log" in page
 
@@ -396,7 +396,7 @@ def test_week_view_without_opengym(client, seeded):
     page = client.get("/week").text
     assert "28.9. bis 4.10.2026" in page
     assert "Training" not in page and "openGym" not in page
-    assert "Di, 29.9." in page and "52 g" in page and "850 kcal" in page
+    assert "Di, 29.9." in page and "52 g" in page and "1.075 kcal" in page
     assert 'class="goal"' in page  # the goal line
     assert "/week?start=2026-09-21" in page
     assert "Im Schnitt 52 g Protein" in page
@@ -409,9 +409,9 @@ def test_week_view_with_start(client, seeded):
 
 
 def test_week_view_marks_training_days(store, seeded):
-    gym = FakeGym([Workout(date(2026, 9, 29), "Oberkörper", 50), Workout(date(2026, 10, 12), "Beine")])
+    gym = FakeGym([Workout(date(2026, 9, 29), "Session A", 50), Workout(date(2026, 10, 12), "Session B")])
     page = TestClient(create_app(store, opengym=gym)).get("/week").text
-    assert page.count("Training: Oberkörper") == 1
+    assert page.count("Training: Session A") == 1
     assert "openGym" not in page
     assert gym.calls == [(date(2026, 9, 28), date(2026, 10, 5))]
 
@@ -445,17 +445,17 @@ def test_api_day(client, seeded):
     assert body["totals"]["protein_g"] == pytest.approx(51.5)
     assert len(body["meals"]) == 2
     entry = body["meals"][0]["entries"][0]
-    assert entry["source"] == "off" and entry["origin"] == "chat" and entry["nutrients"]["kcal"] == 150
+    assert entry["source"] == "off" and entry["origin"] == "chat" and entry["nutrients"]["kcal"] == 375
     assert {g["goal"]["nutrient"] for g in body["goals"]} == {"protein_g", "kcal"}
     bad = client.get("/api/day?day=x")
     assert bad.status_code == 400 and "error" in bad.json()
 
 
 def test_api_week(store, seeded):
-    gym = FakeGym([Workout(date(2026, 9, 29), "Oberkörper", 50)])
+    gym = FakeGym([Workout(date(2026, 9, 29), "Session A", 50)])
     body = TestClient(create_app(store, opengym=gym)).get("/api/week").json()
     assert body["start"] == "2026-09-28" and len(body["days"]) == 7
-    assert body["training"] == [{"day": TODAY, "name": "Oberkörper", "duration_min": 50}]
+    assert body["training"] == [{"day": TODAY, "name": "Session A", "duration_min": 50}]
     assert body["training_available"] is True
     plain = TestClient(create_app(store)).get("/api/week").json()
     assert plain["training"] == [] and plain["training_available"] is False
@@ -477,10 +477,10 @@ def test_api_entry_update_and_delete(writer, store, seeded):
 
 
 def test_api_quick_items(writer, store, food):
-    created = writer.post("/api/quick", json={"food_id": food.id, "grams": 250, "label": "Skyr"})
+    created = writer.post("/api/quick", json={"food_id": food.id, "grams": 250, "label": "Tofu"})
     assert created.status_code == 201
     item_id = created.json()["id"]
-    assert writer.get("/api/quick").json()[0]["label"] == "Skyr"
+    assert writer.get("/api/quick").json()[0]["label"] == "Tofu"
     logged = writer.post(f"/api/quick/{item_id}/log")
     assert logged.status_code == 201 and logged.json()["origin"] == "ui"
     assert writer.post("/api/quick", json={"food_id": food.id, "grams": 0}).status_code == 422
@@ -490,8 +490,8 @@ def test_api_quick_items(writer, store, food):
 
 
 def test_api_foods(client, food):
-    (found,) = client.get("/api/foods?q=skyr").json()
-    assert found["name"] == "Skyr natur" and found["servings"][0]["label"] == "1 Becher"
+    (found,) = client.get("/api/foods?q=tofu").json()
+    assert found["name"] == "Tofu natur" and found["servings"][0]["label"] == "1 Block"
     assert client.get("/api/foods").json() == []
 
 

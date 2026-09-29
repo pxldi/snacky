@@ -21,7 +21,7 @@ from snacky.web import create_app
 class _FakeTraining:
     async def workouts_between(self, start: date, end: date) -> list[Workout]:
         days = [start + timedelta(days=i) for i in range((end - start).days)]
-        return [Workout(day=d, name="Oberkörper", duration_min=55) for d in days if d.toordinal() % 2 == 0]
+        return [Workout(day=d, name="Session A", duration_min=55) for d in days if d.toordinal() % 2 == 0]
 
 
 def main() -> None:

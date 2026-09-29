@@ -2,13 +2,13 @@
 {% block title %}Woche · Snacky{% endblock %}
 {% block content %}
 <div class="daynav">
-  <a class="btn" href="/week?start={{ prev_start.isoformat() }}" rel="prev">Zurück</a>
+  <a class="btn" href="/week?start={{ prev_start.isoformat() }}" rel="prev">Vorwoche</a>
   <div class="daytitle">
     <h1>Woche</h1>
     <p>{{ start.day }}.{{ start.month }}. bis {{ end.day }}.{{ end.month }}.{{ end.year }}</p>
   </div>
   {% if end < today %}
-  <a class="btn" href="/week?start={{ next_start.isoformat() }}" rel="next">Weiter</a>
+  <a class="btn" href="/week?start={{ next_start.isoformat() }}" rel="next">Nächste Woche</a>
   {% else %}
   <span></span>
   {% endif %}

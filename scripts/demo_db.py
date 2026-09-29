@@ -28,34 +28,34 @@ from snacky.store import Store
 
 # name, source, kcal, protein, fat, carbs, fibre per 100 g, servings
 _FOODS = [
-    ("Skyr natur", Source.OFF, 63, 11, 0.2, 4, 0, (Serving("1 Becher", 450),)),
+    ("Sojajoghurt natur", Source.OFF, 50, 4, 2.3, 2.5, 0.6, (Serving("1 Becher", 400),)),
     ("Haferflocken", Source.BLS, 372, 13.5, 7, 59, 10, (Serving("1 Portion", 60),)),
-    ("Hähnchenbrust, gegart", Source.BLS, 160, 31, 3.5, 0, 0, ()),
-    ("Ei, gekocht", Source.BLS, 137, 12.5, 9.5, 0.7, 0, (Serving("1 Ei", 55),)),
+    ("Seitan", Source.MANUAL, 130, 25, 2, 4, 0.5, ()),
+    ("Kichererbsen, gekocht", Source.BLS, 140, 8.5, 2.6, 20, 6, ()),
     ("Banane", Source.BLS, 90, 1.1, 0.2, 20, 2, (Serving("1 Stück", 120),)),
     ("Reis, gekocht", Source.BLS, 130, 2.7, 0.3, 28, 0.4, ()),
-    ("Proteinpulver Vanille", Source.LABEL, 380, 78, 5, 8, 2, (Serving("1 Scoop", 30),)),
+    ("Erbsenprotein-Pulver", Source.LABEL, 380, 78, 5, 8, 2, (Serving("1 Scoop", 30),)),
     ("Vollkornbrot", Source.BLS, 210, 7, 1.5, 40, 7, (Serving("1 Scheibe", 50),)),
-    ("Magerquark", Source.OFF, 67, 12, 0.3, 4, 0, ()),
+    ("Tofu natur", Source.OFF, 125, 12, 7, 1, 1, (Serving("1 Block", 200),)),
     ("Linsen, gekocht", Source.BLS, 115, 9, 0.4, 20, 8, ()),
-    ("Lachs, gebraten", Source.BLS, 210, 22, 14, 0, 0, ()),
+    ("Erdnussmus", Source.LABEL, 600, 25, 50, 12, 6, (Serving("1 EL", 15),)),
     ("Apfel", Source.BLS, 55, 0.3, 0.4, 12, 2, (Serving("1 Stück", 180),)),
 ]
 
 _QUICK = [
-    ("Proteinshake", "Proteinpulver Vanille", 30),
-    ("Skyr", "Skyr natur", 250),
+    ("Proteinshake (Erbse)", "Erbsenprotein-Pulver", 30),
+    ("Sojajoghurt", "Sojajoghurt natur", 250),
     ("Banane", "Banane", 120),
 ]
 
 # (hour, minute, [(food, grams)]) per meal; each day picks a variation of these.
 _DAY_PLAN = [
-    (7, 40, [("Haferflocken", 60), ("Magerquark", 200), ("Banane", 120)]),
-    (12, 45, [("Hähnchenbrust, gegart", 150), ("Reis, gekocht", 200)]),
+    (7, 40, [("Haferflocken", 60), ("Sojajoghurt natur", 200), ("Banane", 120)]),
+    (12, 45, [("Seitan", 150), ("Reis, gekocht", 200)]),
     (12, 45, [("Linsen, gekocht", 250), ("Vollkornbrot", 100)]),
-    (16, 0, [("Skyr natur", 250)]),
-    (19, 30, [("Lachs, gebraten", 150), ("Reis, gekocht", 180)]),
-    (19, 30, [("Ei, gekocht", 165), ("Vollkornbrot", 100)]),
+    (16, 0, [("Erdnussmus", 30), ("Apfel", 180)]),
+    (19, 30, [("Tofu natur", 200), ("Reis, gekocht", 180)]),
+    (19, 30, [("Kichererbsen, gekocht", 250), ("Vollkornbrot", 100)]),
 ]
 
 
@@ -74,7 +74,7 @@ def build(out: str | Path, today: date | None = None) -> Store:
                 servings=servings,
             )
         )
-    store.set_goal(Goal("protein_g", GoalKind.MIN, today - timedelta(days=60), min=150))
+    store.set_goal(Goal("protein_g", GoalKind.MIN, today - timedelta(days=60), min=120))
     store.set_goal(Goal("kcal", GoalKind.BAND, today - timedelta(days=60), min=2200, max=2600))
     for label, food, grams in _QUICK:
         store.add_quick_item(foods[food].id, grams, label)
