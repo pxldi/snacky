@@ -1,0 +1,53 @@
+{
+  "count": 5,
+  "next": null,
+  "previous": null,
+  "timestamp": "2026-01-01T00:00:00Z",
+  "results": [
+    {
+      "id": 21,
+      "name": "Energy",
+      "unit": "kcal",
+      "description": null,
+      "order": 21,
+      "open_data_slug": null,
+      "fdc_id": null
+    },
+    {
+      "id": 22,
+      "name": "Protein",
+      "unit": "g",
+      "description": null,
+      "order": 22,
+      "open_data_slug": null,
+      "fdc_id": null
+    },
+    {
+      "id": 23,
+      "name": "Fat",
+      "unit": "g",
+      "description": null,
+      "order": 23,
+      "open_data_slug": null,
+      "fdc_id": null
+    },
+    {
+      "id": 24,
+      "name": "Carbohydrates",
+      "unit": "g",
+      "description": null,
+      "order": 24,
+      "open_data_slug": null,
+      "fdc_id": null
+    },
+    {
+      "id": 25,
+      "name": "Fiber",
+      "unit": "g",
+      "description": null,
+      "order": 25,
+      "open_data_slug": null,
+      "fdc_id": null
+    }
+  ]
+}

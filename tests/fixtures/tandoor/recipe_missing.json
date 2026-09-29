@@ -1,0 +1,260 @@
+{
+  "id": 8,
+  "name": "Test Stew",
+  "description": "",
+  "image": null,
+  "keywords": [],
+  "steps": [],
+  "working_time": 10,
+  "waiting_time": 0,
+  "created_by": {
+    "id": 1,
+    "username": "tester"
+  },
+  "created_at": "2026-01-01T00:00:00Z",
+  "updated_at": "2026-01-01T00:00:00Z",
+  "source_url": null,
+  "internal": true,
+  "show_ingredient_overview": true,
+  "nutrition": null,
+  "properties": [],
+  "food_properties": {
+    "11": {
+      "id": 11,
+      "name": "Kalorien",
+      "description": null,
+      "unit": "kcal",
+      "order": 11,
+      "food_values": {
+        "101": {
+          "id": 101,
+          "food": {
+            "id": 101,
+            "name": "Test Oats"
+          },
+          "value": 560
+        },
+        "103": {
+          "id": 103,
+          "food": {
+            "id": 103,
+            "name": "Mystery Spice Mix"
+          },
+          "value": null,
+          "missing_conversion": {
+            "base_unit": {
+              "id": 5,
+              "name": "tsp"
+            },
+            "converted_unit": {
+              "id": 1,
+              "name": "g"
+            }
+          }
+        },
+        "104": {
+          "id": 104,
+          "food": {
+            "id": 104,
+            "name": "Test Egg"
+          },
+          "value": 0,
+          "missing_unit": true
+        }
+      },
+      "total_value": 560,
+      "missing_value": true
+    },
+    "12": {
+      "id": 12,
+      "name": "Eiweiß",
+      "description": null,
+      "unit": "g",
+      "order": 12,
+      "food_values": {
+        "101": {
+          "id": 101,
+          "food": {
+            "id": 101,
+            "name": "Test Oats"
+          },
+          "value": 26
+        },
+        "103": {
+          "id": 103,
+          "food": {
+            "id": 103,
+            "name": "Mystery Spice Mix"
+          },
+          "value": null,
+          "missing_conversion": {
+            "base_unit": {
+              "id": 5,
+              "name": "tsp"
+            },
+            "converted_unit": {
+              "id": 1,
+              "name": "g"
+            }
+          }
+        },
+        "104": {
+          "id": 104,
+          "food": {
+            "id": 104,
+            "name": "Test Egg"
+          },
+          "value": 0,
+          "missing_unit": true
+        }
+      },
+      "total_value": 26,
+      "missing_value": true
+    },
+    "13": {
+      "id": 13,
+      "name": "Fett",
+      "description": null,
+      "unit": "g",
+      "order": 13,
+      "food_values": {
+        "101": {
+          "id": 101,
+          "food": {
+            "id": 101,
+            "name": "Test Oats"
+          },
+          "value": 12
+        },
+        "103": {
+          "id": 103,
+          "food": {
+            "id": 103,
+            "name": "Mystery Spice Mix"
+          },
+          "value": null,
+          "missing_conversion": {
+            "base_unit": {
+              "id": 5,
+              "name": "tsp"
+            },
+            "converted_unit": {
+              "id": 1,
+              "name": "g"
+            }
+          }
+        },
+        "104": {
+          "id": 104,
+          "food": {
+            "id": 104,
+            "name": "Test Egg"
+          },
+          "value": 0,
+          "missing_unit": true
+        }
+      },
+      "total_value": 12,
+      "missing_value": true
+    },
+    "14": {
+      "id": 14,
+      "name": "Kohlenhydrate",
+      "description": null,
+      "unit": "g",
+      "order": 14,
+      "food_values": {
+        "101": {
+          "id": 101,
+          "food": {
+            "id": 101,
+            "name": "Test Oats"
+          },
+          "value": 96
+        },
+        "103": {
+          "id": 103,
+          "food": {
+            "id": 103,
+            "name": "Mystery Spice Mix"
+          },
+          "value": null,
+          "missing_conversion": {
+            "base_unit": {
+              "id": 5,
+              "name": "tsp"
+            },
+            "converted_unit": {
+              "id": 1,
+              "name": "g"
+            }
+          }
+        },
+        "104": {
+          "id": 104,
+          "food": {
+            "id": 104,
+            "name": "Test Egg"
+          },
+          "value": 0,
+          "missing_unit": true
+        }
+      },
+      "total_value": 96,
+      "missing_value": true
+    },
+    "15": {
+      "id": 15,
+      "name": "Ballaststoffe",
+      "description": null,
+      "unit": "g",
+      "order": 15,
+      "food_values": {
+        "101": {
+          "id": 101,
+          "food": {
+            "id": 101,
+            "name": "Test Oats"
+          },
+          "value": 20
+        },
+        "103": {
+          "id": 103,
+          "food": {
+            "id": 103,
+            "name": "Mystery Spice Mix"
+          },
+          "value": null,
+          "missing_conversion": {
+            "base_unit": {
+              "id": 5,
+              "name": "tsp"
+            },
+            "converted_unit": {
+              "id": 1,
+              "name": "g"
+            }
+          }
+        },
+        "104": {
+          "id": 104,
+          "food": {
+            "id": 104,
+            "name": "Test Egg"
+          },
+          "value": 0,
+          "missing_unit": true
+        }
+      },
+      "total_value": 20,
+      "missing_value": true
+    }
+  },
+  "servings": 4,
+  "file_path": "",
+  "servings_text": "",
+  "rating": null,
+  "last_cooked": null,
+  "private": false,
+  "shared": []
+}

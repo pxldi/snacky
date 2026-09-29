@@ -1,0 +1,125 @@
+{
+  "id": 10,
+  "name": "Test Names",
+  "description": "",
+  "image": null,
+  "keywords": [],
+  "steps": [],
+  "working_time": 10,
+  "waiting_time": 0,
+  "created_by": {
+    "id": 1,
+    "username": "tester"
+  },
+  "created_at": "2026-01-01T00:00:00Z",
+  "updated_at": "2026-01-01T00:00:00Z",
+  "source_url": null,
+  "internal": true,
+  "show_ingredient_overview": true,
+  "nutrition": null,
+  "properties": [],
+  "food_properties": {
+    "21": {
+      "id": 21,
+      "name": "Energy",
+      "description": null,
+      "unit": "kcal",
+      "order": 21,
+      "food_values": {
+        "101": {
+          "id": 101,
+          "food": {
+            "id": 101,
+            "name": "Test Oats"
+          },
+          "value": 560
+        }
+      },
+      "total_value": 300,
+      "missing_value": false
+    },
+    "22": {
+      "id": 22,
+      "name": "Protein",
+      "description": null,
+      "unit": "g",
+      "order": 22,
+      "food_values": {
+        "101": {
+          "id": 101,
+          "food": {
+            "id": 101,
+            "name": "Test Oats"
+          },
+          "value": 26
+        }
+      },
+      "total_value": 15,
+      "missing_value": false
+    },
+    "23": {
+      "id": 23,
+      "name": "Fat",
+      "description": null,
+      "unit": "g",
+      "order": 23,
+      "food_values": {
+        "101": {
+          "id": 101,
+          "food": {
+            "id": 101,
+            "name": "Test Oats"
+          },
+          "value": 12
+        }
+      },
+      "total_value": 9,
+      "missing_value": false
+    },
+    "24": {
+      "id": 24,
+      "name": "Carbohydrates",
+      "description": null,
+      "unit": "g",
+      "order": 24,
+      "food_values": {
+        "101": {
+          "id": 101,
+          "food": {
+            "id": 101,
+            "name": "Test Oats"
+          },
+          "value": 96
+        }
+      },
+      "total_value": 40,
+      "missing_value": false
+    },
+    "25": {
+      "id": 25,
+      "name": "Fiber",
+      "description": null,
+      "unit": "g",
+      "order": 25,
+      "food_values": {
+        "101": {
+          "id": 101,
+          "food": {
+            "id": 101,
+            "name": "Test Oats"
+          },
+          "value": 20
+        }
+      },
+      "total_value": 5,
+      "missing_value": false
+    }
+  },
+  "servings": 1,
+  "file_path": "",
+  "servings_text": "",
+  "rating": null,
+  "last_cooked": null,
+  "private": false,
+  "shared": []
+}

@@ -1,0 +1,165 @@
+{
+  "id": 7,
+  "name": "Test Oat Bowl",
+  "description": "",
+  "image": null,
+  "keywords": [],
+  "steps": [],
+  "working_time": 10,
+  "waiting_time": 0,
+  "created_by": {
+    "id": 1,
+    "username": "tester"
+  },
+  "created_at": "2026-01-01T00:00:00Z",
+  "updated_at": "2026-01-01T00:00:00Z",
+  "source_url": null,
+  "internal": true,
+  "show_ingredient_overview": true,
+  "nutrition": null,
+  "properties": [],
+  "food_properties": {
+    "11": {
+      "id": 11,
+      "name": "Kalorien",
+      "description": null,
+      "unit": "kcal",
+      "order": 11,
+      "food_values": {
+        "101": {
+          "id": 101,
+          "food": {
+            "id": 101,
+            "name": "Test Oats"
+          },
+          "value": 560
+        },
+        "102": {
+          "id": 102,
+          "food": {
+            "id": 102,
+            "name": "Test Milk"
+          },
+          "value": 240
+        }
+      },
+      "total_value": 800,
+      "missing_value": false
+    },
+    "12": {
+      "id": 12,
+      "name": "Eiweiß",
+      "description": null,
+      "unit": "g",
+      "order": 12,
+      "food_values": {
+        "101": {
+          "id": 101,
+          "food": {
+            "id": 101,
+            "name": "Test Oats"
+          },
+          "value": 26
+        },
+        "102": {
+          "id": 102,
+          "food": {
+            "id": 102,
+            "name": "Test Milk"
+          },
+          "value": 16
+        }
+      },
+      "total_value": 42,
+      "missing_value": false
+    },
+    "13": {
+      "id": 13,
+      "name": "Fett",
+      "description": null,
+      "unit": "g",
+      "order": 13,
+      "food_values": {
+        "101": {
+          "id": 101,
+          "food": {
+            "id": 101,
+            "name": "Test Oats"
+          },
+          "value": 12
+        },
+        "102": {
+          "id": 102,
+          "food": {
+            "id": 102,
+            "name": "Test Milk"
+          },
+          "value": 8
+        }
+      },
+      "total_value": 20,
+      "missing_value": false
+    },
+    "14": {
+      "id": 14,
+      "name": "Kohlenhydrate",
+      "description": null,
+      "unit": "g",
+      "order": 14,
+      "food_values": {
+        "101": {
+          "id": 101,
+          "food": {
+            "id": 101,
+            "name": "Test Oats"
+          },
+          "value": 96
+        },
+        "102": {
+          "id": 102,
+          "food": {
+            "id": 102,
+            "name": "Test Milk"
+          },
+          "value": 24
+        }
+      },
+      "total_value": 120,
+      "missing_value": false
+    },
+    "15": {
+      "id": 15,
+      "name": "Ballaststoffe",
+      "description": null,
+      "unit": "g",
+      "order": 15,
+      "food_values": {
+        "101": {
+          "id": 101,
+          "food": {
+            "id": 101,
+            "name": "Test Oats"
+          },
+          "value": 20
+        },
+        "102": {
+          "id": 102,
+          "food": {
+            "id": 102,
+            "name": "Test Milk"
+          },
+          "value": 0
+        }
+      },
+      "total_value": 20,
+      "missing_value": false
+    }
+  },
+  "servings": 2,
+  "file_path": "",
+  "servings_text": "",
+  "rating": null,
+  "last_cooked": null,
+  "private": false,
+  "shared": []
+}

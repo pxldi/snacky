@@ -1,0 +1,44 @@
+{
+  "id": 102,
+  "name": "Test Milk",
+  "plural_name": null,
+  "description": "",
+  "shopping": "",
+  "recipe": null,
+  "url": "",
+  "properties": [
+    {
+      "id": 6,
+      "property_amount": 64,
+      "property_type": {
+        "id": 11,
+        "name": "Kalorien",
+        "unit": "kcal",
+        "description": null,
+        "order": 11,
+        "open_data_slug": null,
+        "fdc_id": 1008
+      }
+    },
+    {
+      "id": 9,
+      "property_amount": 5.0,
+      "property_type": {
+        "id": 99,
+        "name": "Zucker",
+        "unit": "g",
+        "description": null,
+        "order": 9,
+        "open_data_slug": null,
+        "fdc_id": null
+      }
+    }
+  ],
+  "properties_food_amount": 100,
+  "properties_food_unit": null,
+  "fdc_id": null,
+  "supermarket_category": null,
+  "parent": null,
+  "numchild": 0,
+  "numrecipe": 0
+}
