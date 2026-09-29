@@ -1,0 +1,110 @@
+# One click: run this workflow from main. It picks the next version from the
+# Conventional Commits since the last tag (git-cliff), tags main, writes the
+# GitHub Release notes and pushes the image tagged with the version.
+# Pushing a v* tag by hand does the same for that tag.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/snacky
+  # Pinned so the same commits always give the same notes and version.
+  CLIFF: git-cliff==2.14.2
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Only release from main
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Run this workflow from main."
+          exit 1
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # git-cliff reads every tag and the history between them.
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+
+      # A tag pushed with the workflow's own token starts no other workflow,
+      # so tagging, notes and image all happen in this one run.
+      - name: Choose and create the tag
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          # With no previous tag this is v0.1.0 (initial_tag in cliff.toml).
+          # With nothing to bump it returns the latest tag again, which the
+          # checks below reject.
+          tag=$(uvx --from "$CLIFF" git-cliff --bumped-version 2>/dev/null)
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "::error::Nothing to release: $tag already exists and no commit since is releasable."
+            exit 1
+          fi
+          uvx --from "$CLIFF" git-cliff --unreleased --tag "$tag" --strip all 2>/dev/null > "$RUNNER_TEMP/preview.md"
+          if ! grep -q '^### ' "$RUNNER_TEMP/preview.md"; then
+            echo "::error::Nothing to release: no feat, fix, perf or breaking commit since the last tag."
+            exit 1
+          fi
+          git tag "$tag"
+          git push origin "refs/tags/$tag"
+          echo "TAG=$tag" >> "$GITHUB_ENV"
+
+      - name: Name the tag
+        if: github.event_name == 'push'
+        run: echo "TAG=$GITHUB_REF_NAME" >> "$GITHUB_ENV"
+
+      # --current is the tag HEAD is on, so it covers exactly the commits since
+      # the previous tag, however this run started.
+      - name: Write release notes
+        run: |
+          set -euo pipefail
+          uvx --from "$CLIFF" git-cliff --current --strip all 2>/dev/null > "$RUNNER_TEMP/NOTES.md"
+          if ! grep -q '^### ' "$RUNNER_TEMP/NOTES.md"; then
+            echo "Maintenance release: no user-facing changes." > "$RUNNER_TEMP/NOTES.md"
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$TAG" --verify-tag --title "$TAG" --notes-file "$RUNNER_TEMP/NOTES.md"
+
+      - name: Work out the image tags
+        run: |
+          echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
+          echo "SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+        with:
+          context: .
+          platforms: linux/amd64
+          build-args: |
+            GIT_SHA=${{ env.SHA }}
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ env.VERSION }}
+          cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
+          provenance: false
