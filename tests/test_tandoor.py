@@ -203,3 +203,49 @@ async def test_set_food_properties_creates_gram_unit_when_missing(client):
     body = json.loads(patch.calls.last.request.content)
     assert body["properties_food_unit"]["id"] == 9
     assert sorted(p["property_type"]["id"] for p in body["properties"]) == [11, 12, 13, 14, 15]
+
+
+@respx.mock
+async def test_repeated_food_with_an_unconvertible_unit_is_incomplete(client):
+    # Tandoor keeps the first amount's value and only adds the flag when the same
+    # food comes up again in a unit it cannot convert.
+    mock_types(respx)
+    recipe = fx("recipe_complete.json")
+    entry = recipe["food_properties"]["12"]
+    entry["missing_value"] = True
+    entry["food_values"]["102"]["missing_conversion"] = {
+        "base_unit": {"id": 3, "name": "cup"},
+        "converted_unit": {"id": 1, "name": "g"},
+    }
+    respx.get(f"{BASE}/api/recipe/7/").respond(json=recipe)
+    r = await client.recipe_nutrition(7)
+    assert not r.complete
+    assert r.missing == ("Test Milk",)
+
+
+@respx.mock
+async def test_new_property_keeps_the_type_order(client):
+    # Tandoor saves a new property with a non-partial serializer, which resets the
+    # nested type's order to 0 unless the order is in the payload.
+    mock_types(respx)
+    respx.get(f"{BASE}/api/unit/").respond(json=fx("units.json"))
+    respx.get(f"{BASE}/api/food/102/").respond(json=fx("food_partial.json"))
+    patch = respx.patch(f"{BASE}/api/food/102/").respond(json=fx("foods_page1.json")["results"][1])
+    await client.set_food_properties(102, Nutrients(64, 3.4, 3.6, 4.8, None))
+    body = json.loads(patch.calls.last.request.content)
+    protein = next(p for p in body["properties"] if p["property_type"]["id"] == 12)
+    assert protein["property_type"]["order"] == 12
+
+
+@respx.mock
+async def test_energy_is_written_in_the_unit_of_its_type(client):
+    types = fx("property_types_kj.json")
+    types["results"].append({"id": 45, "name": "Ballaststoffe", "unit": "g", "fdc_id": 1079, "order": 45})
+    respx.get(f"{BASE}/api/property-type/").respond(json=types)
+    respx.get(f"{BASE}/api/unit/").respond(json=fx("units.json"))
+    respx.get(f"{BASE}/api/food/103/").respond(json=fx("foods_page2.json")["results"][0])
+    patch = respx.patch(f"{BASE}/api/food/103/").respond(json=fx("foods_page2.json")["results"][0])
+    await client.set_food_properties(103, Nutrients(100, 25, 1.5, 55, 12))
+    body = json.loads(patch.calls.last.request.content)
+    energy = next(p for p in body["properties"] if p["property_type"]["id"] == 41)
+    assert energy["property_amount"] == pytest.approx(418.4)
