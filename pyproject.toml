@@ -23,6 +23,8 @@ dev = [
     "respx>=0.23.1",
     "ruff>=0.16.9",
 ]
+# Only the image build uses these, to convert the BLS download.
+bls-build = []
 
 [build-system]
 requires = ["hatchling"]
