@@ -91,3 +91,13 @@ A day is judged by the goals that applied on that day.
 
 Nobody says which meal an entry belongs to. Entries less than
 `SNACKY_MEAL_GAP_MIN` minutes apart (default 90) form one meal.
+
+## Image smoke test
+
+CI builds the image once, loads it, and runs `ci/smoke-image.sh` on it before
+anything is pushed. The script starts the container with a read-only root, a
+tmpfs `/data` owned by uid 1000 and no Tandoor or openGym settings. Then
+`ci/smoke_test.py` waits for `/health`, lists the tools, searches "Tofu",
+logs 100 g, reads the day summary, and fetches the web page when port 8080
+answers. Until the web app is on main, the entry point serves MCP only and the
+web check is skipped.

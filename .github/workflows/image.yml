@@ -1,5 +1,6 @@
-# Pull requests build the image and do not push. A push to main publishes it,
-# tagged with the commit it was built from, which is the tag a Deployment pins.
+# Every run builds the image once, loads it and smoke-tests it. Pull requests
+# stop there. A push to main then pushes the tested image, tagged with the
+# commit it was built from, which is the tag a Deployment pins.
 name: Image
 
 on:
@@ -40,16 +41,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
           context: .
           platforms: linux/amd64
           build-args: |
             GIT_SHA=${{ env.SHA }}
-          push: ${{ github.event_name != 'pull_request' }}
-          load: ${{ github.event_name == 'pull_request' }}
+          # Loaded, not pushed, so the smoke test runs on the exact image that
+          # main pushes afterwards, without a second build.
+          load: true
           tags: ${{ env.IMAGE }}:sha-${{ env.SHA }}
           cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
           cache-to: ${{ github.event_name != 'pull_request' && format('type=registry,ref={0}:buildcache,mode=max', env.IMAGE) || '' }}
           provenance: false
+
+      - name: Smoke-test the image
+        run: ci/smoke-image.sh "$IMAGE:sha-$SHA"
+        timeout-minutes: 3
+
+      - name: Push
+        if: github.event_name != 'pull_request'
+        run: docker push "$IMAGE:sha-$SHA"
