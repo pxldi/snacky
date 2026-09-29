@@ -106,7 +106,31 @@ def build(out: str | Path, today: date | None = None) -> Store:
                     grams=grams,
                     food_id=food.id,
                 )
-        if rng.random() < 0.35:
+        if back == 1:
+            # A day that reaches the goal, so the demo shows the met state.
+            powder = foods["Erbsenprotein-Pulver"]
+            store.log_entry(
+                name=powder.name,
+                nutrients=powder.per_100g.for_grams(60),
+                eaten_at=datetime.combine(day, time(15, 30), tzinfo=config.TZ),
+                source=powder.source,
+                origin=Origin.UI,
+                grams=60,
+                food_id=powder.id,
+            )
+        if back == 0:
+            # Today always carries one estimate, so the demo shows how they look.
+            store.log_entry(
+                name="Restaurant, Pasta mit Tomatensauce",
+                nutrients=Nutrients(720, 24, 22, 100, None),
+                eaten_at=datetime.combine(day, time(8, 5), tzinfo=config.TZ),
+                source=Source.AI_ESTIMATE,
+                origin=Origin.CHAT,
+                servings=1,
+                confidence=Confidence.LOW,
+                assumptions="Eine Restaurantportion, etwa 350 g gekocht.",
+            )
+        elif rng.random() < 0.35:
             store.log_entry(
                 name="Restaurant, Pasta mit Tomatensauce",
                 nutrients=Nutrients(720, 24, 22, 100, None),
