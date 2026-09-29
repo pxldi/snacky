@@ -846,6 +846,41 @@ def create_mcp(
             },
         }
 
+    @mcp.tool()
+    @guarded()
+    async def recipe_nutrition(
+        recipe_ids: Annotated[
+            list[int], Field(min_length=1, max_length=20, description="Tandoor recipe ids, at most 20.")
+        ],
+    ) -> dict:
+        """Nutrition per serving for Tandoor recipes, as Tandoor computes it: kcal, protein and protein per
+        100 kcal, to rank recipes by protein when planning meals. A recipe with `complete` false has
+        ingredients without nutrient data (listed in `missing`), so its numbers are too low. A recipe that
+        fails is reported on its own and does not stop the others."""
+        if tandoor is None:
+            raise ToolError("Tandoor is not configured on this server.")
+        recipes: list[dict[str, Any]] = []
+        for recipe_id in dict.fromkeys(recipe_ids):
+            try:
+                r = await tandoor.recipe_nutrition(recipe_id)
+            except TandoorError as exc:
+                recipes.append({"recipe_id": recipe_id, "error": _describe(exc)})
+                continue
+            n = r.per_serving
+            recipes.append(
+                {
+                    "recipe_id": r.recipe_id,
+                    "name": r.name,
+                    "servings": _r(r.servings),
+                    "per_serving": _nutrients(n),
+                    "protein_per_100kcal": _r(n.protein_g / n.kcal * 100) if n.kcal > 0 else None,
+                    "complete": r.complete,
+                    "missing": list(r.missing),
+                    "source": Source.TANDOOR.value,
+                }
+            )
+        return {"recipes": recipes}
+
     return mcp
 
 

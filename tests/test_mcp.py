@@ -126,6 +126,7 @@ async def test_all_tools_are_listed_with_argument_descriptions(mcp):
             "add_serving",
             "suggest_foods",
             "log_again",
+            "recipe_nutrition",
         ]
     )
     for tool in tools:
@@ -767,3 +768,33 @@ async def test_log_again_logs_nothing_when_one_id_is_unknown(mcp, store):
 async def test_log_again_refuses_a_future_time(mcp, store):
     entry = eat(store, stock(store, "Oat Flakes", 370, 13), 60)
     await fails(mcp, "log_again", "future", entry_ids=[entry.id], eaten_at="2026-10-05T08:00")
+
+
+# --- recipe_nutrition --------------------------------------------------------
+
+
+@respx.mock
+async def test_recipe_nutrition_ranks_inputs_and_reports_each_recipe_alone(mcp):
+    respx.get(f"{TANDOOR}/api/property-type/").respond(json=fixture_json("tandoor", "property_types.json"))
+    respx.get(f"{TANDOOR}/api/recipe/7/").respond(json=fixture_json("tandoor", "recipe_complete.json"))
+    respx.get(f"{TANDOOR}/api/recipe/8/").respond(json=fixture_json("tandoor", "recipe_missing.json"))
+    respx.get(f"{TANDOOR}/api/recipe/9/").respond(404, json={})
+    out = await call(mcp, "recipe_nutrition", recipe_ids=[7, 8, 9, 7])
+    complete, gappy, broken = out["recipes"]
+    assert complete["recipe_id"] == 7 and complete["complete"] is True and complete["missing"] == []
+    assert complete["per_serving"]["kcal"] == 400.0
+    assert complete["protein_per_100kcal"] == round(
+        complete["per_serving"]["protein_g"] / complete["per_serving"]["kcal"] * 100, 1
+    )
+    assert gappy["complete"] is False and gappy["missing"] == ["Mystery Spice Mix", "Test Egg"]
+    assert broken["recipe_id"] == 9 and "404" in broken["error"] and "per_serving" not in broken
+
+
+@respx.mock
+async def test_recipe_nutrition_limits_and_configuration(make):
+    await fails(make(with_tandoor=False), "recipe_nutrition", "not configured", recipe_ids=[7])
+    await fails(make(), "recipe_nutrition", "at most 20", recipe_ids=list(range(1, 22)))
+    respx.get(f"{TANDOOR}/api/recipe/7/").respond(json=fixture_json("tandoor", "recipe_complete.json"))
+    respx.get(f"{TANDOOR}/api/property-type/").respond(401, json={})
+    out = await call(make(), "recipe_nutrition", recipe_ids=[7])
+    assert "401" in out["recipes"][0]["error"]
