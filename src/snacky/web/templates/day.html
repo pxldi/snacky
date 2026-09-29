@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}{{ date_long(day) }} · Snacky{% endblock %}
+{% block content %}
+<div class="daynav">
+  <a class="btn" href="/?day={{ prev_day.isoformat() }}" rel="prev">Vortag</a>
+  <div class="daytitle">
+    <h1>{% if day == today %}Heute{% else %}{{ date_short(day) }}{% endif %}</h1>
+    <p>{{ date_long(day) }}</p>
+  </div>
+  {% if day < today %}
+  <a class="btn" href="/?day={{ next_day.isoformat() }}" rel="next">Nächster Tag</a>
+  {% else %}
+  <span></span>
+  {% endif %}
+</div>
+{% if day != today %}
+<p class="center"><a href="/">Zu heute</a></p>
+{% endif %}
+
+{% if undo %}
+<form class="notice" method="post" action="/entries/{{ undo.id }}/undo">
+  <p>Eingetragen: {{ undo.name }}{% if undo.grams %}, {{ undo.grams|amount }} g{% endif %}.</p>
+  <input type="hidden" name="next" value="/">
+  <button type="submit" class="btn">Rückgängig</button>
+</form>
+{% endif %}
+
+<section class="totals" aria-label="Tagessumme">
+  <div class="hero">
+    <h2>Protein</h2>
+    <p class="hero-number"><span class="big">{{ summary.totals.protein_g|num }}</span> <span class="unit">g</span></p>
+    {% if protein %}
+    <progress class="{{ 'met' if protein.met }}" max="1" value="{{ '%.3f'|format(protein.fill) }}">{{ protein.gap }}</progress>
+    <p class="goal">Ziel: {{ protein.target }}<br>{{ protein.gap|upfirst }}</p>
+    {% else %}
+    <p class="goal">Kein Proteinziel gesetzt.</p>
+    {% endif %}
+  </div>
+  <div class="side">
+    <h2>Energie</h2>
+    <p class="side-number"><span class="mid">{{ summary.totals.kcal|num }}</span> <span class="unit">kcal</span></p>
+    {% if kcal %}
+    <progress class="{{ 'met' if kcal.met }}" max="1" value="{{ '%.3f'|format(kcal.fill) }}">{{ kcal.gap }}</progress>
+    <p class="goal">Ziel: {{ kcal.short }}<br>{{ kcal.gap|upfirst }}</p>
+    {% else %}
+    <p class="goal">Kein Kalorienziel gesetzt.</p>
+    {% endif %}
+  </div>
+</section>
+{% if summary.estimated_share > 0 %}
+<p class="hint">{{ (summary.estimated_share * 100)|num }} % der Kalorien sind geschätzt.</p>
+{% endif %}
+
+{% if day == today %}
+<section aria-labelledby="quick-h">
+  <h2 id="quick-h">Schnell</h2>
+  {% if quick %}
+  <ul class="quick">
+    {% for q in quick %}
+    <li>
+      <form method="post" action="/quick/{{ q.item.id }}/log">
+        <button type="submit" class="quick-btn">
+          <span class="q-label">{{ q.item.label }}</span>
+          <span class="q-nums">{{ q.nutrients.protein_g|num }} g · {{ q.nutrients.kcal|num }} kcal</span>
+        </button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty">Noch keine Schnellwahl. <a href="/quick">Lege welche an.</a></p>
+  {% endif %}
+</section>
+{% endif %}
+
+<section aria-labelledby="meals-h">
+  <h2 id="meals-h">Mahlzeiten</h2>
+  {% if not meals %}
+  <p class="empty">Noch nichts eingetragen. Schreib dem Bot, was du gegessen hast.</p>
+  {% endif %}
+  {% for m in meals %}
+  <article class="meal">
+    <header>
+      <h3>{{ clock(m.meal.start) }} Uhr</h3>
+      <p class="meal-sum">
+        <strong>{{ m.meal.totals.protein_g|num }} g Protein</strong> · {{ m.meal.totals.kcal|num }} kcal
+      </p>
+      {% if m.reached is not none %}
+      <p class="tag {{ 'ok' if m.reached else 'low' }}">
+        {% if m.reached %}Ziel {{ meal_min|num }} g erreicht{% else %}unter {{ meal_min|num }} g{% endif %}
+      </p>
+      {% endif %}
+    </header>
+    <ul class="entries">
+      {% for e in m.meal.entries %}
+      <li>
+        <a class="entry" href="/entries/{{ e.id }}">
+          <span class="e-main">
+            <span class="e-name">{{ e.name }}</span>
+            <span class="e-meta">
+              {{ clock(e.eaten_at) }}
+              {% if e.grams %} · {{ e.grams|amount }} g{% elif e.servings %} · {{ e.servings|amount }} Portion(en){% endif %}
+              {% if e.source != AI_ESTIMATE %} · {{ SOURCE_LABELS[e.source] }}{% endif %}
+              {% if is_estimate(e.source, e.confidence) %}
+              <span class="tag est">Schätzung{% if e.confidence and e.confidence.value != "high" %} ({{ CONFIDENCE_LABELS[e.confidence] }}){% endif %}</span>
+              {% endif %}
+            </span>
+          </span>
+          <span class="e-nums">
+            <span class="e-p">{{ e.nutrients.protein_g|num(1) }} g</span>
+            <span class="e-k">{{ e.nutrients.kcal|num }} kcal</span>
+          </span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}
