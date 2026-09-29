@@ -1,0 +1,661 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-29T21:07:36+00:00",
+  "title": "Design System: Snacky",
+  "extensions": {
+    "colorMeta": {
+      "himbeer": {
+        "role": "primary",
+        "displayName": "Himbeer",
+        "canonical": "#d6247a",
+        "tonalRamp": [
+          "oklch(15% 0.200 358.2)",
+          "oklch(26% 0.200 358.2)",
+          "oklch(37% 0.200 358.2)",
+          "oklch(48% 0.200 358.2)",
+          "oklch(59% 0.200 358.2)",
+          "oklch(70% 0.200 358.2)",
+          "oklch(82% 0.200 358.2)",
+          "oklch(95% 0.200 358.2)"
+        ]
+      },
+      "himbeer-press": {
+        "role": "primary",
+        "displayName": "Himbeer Press",
+        "canonical": "#b81d69",
+        "tonalRamp": [
+          "oklch(15% 0.195 357.7)",
+          "oklch(26% 0.195 357.7)",
+          "oklch(37% 0.195 357.7)",
+          "oklch(48% 0.195 357.7)",
+          "oklch(59% 0.195 357.7)",
+          "oklch(70% 0.195 357.7)",
+          "oklch(82% 0.195 357.7)",
+          "oklch(95% 0.195 357.7)"
+        ]
+      },
+      "senf": {
+        "role": "secondary",
+        "displayName": "Senf",
+        "canonical": "#ffc629",
+        "tonalRamp": [
+          "oklch(15% 0.166 86.2)",
+          "oklch(26% 0.166 86.2)",
+          "oklch(37% 0.166 86.2)",
+          "oklch(48% 0.166 86.2)",
+          "oklch(59% 0.166 86.2)",
+          "oklch(70% 0.166 86.2)",
+          "oklch(82% 0.166 86.2)",
+          "oklch(95% 0.166 86.2)"
+        ]
+      },
+      "print": {
+        "role": "neutral",
+        "displayName": "Print Black",
+        "canonical": "#141014",
+        "tonalRamp": [
+          "oklch(15% 0.010 326.0)",
+          "oklch(26% 0.010 326.0)",
+          "oklch(37% 0.010 326.0)",
+          "oklch(48% 0.010 326.0)",
+          "oklch(59% 0.010 326.0)",
+          "oklch(70% 0.010 326.0)",
+          "oklch(82% 0.010 326.0)",
+          "oklch(95% 0.010 326.0)"
+        ]
+      },
+      "print-lift": {
+        "role": "neutral",
+        "displayName": "Print Lift",
+        "canonical": "#3a2a36",
+        "tonalRamp": [
+          "oklch(15% 0.031 335.5)",
+          "oklch(26% 0.031 335.5)",
+          "oklch(37% 0.031 335.5)",
+          "oklch(48% 0.031 335.5)",
+          "oklch(59% 0.031 335.5)",
+          "oklch(70% 0.031 335.5)",
+          "oklch(82% 0.031 335.5)",
+          "oklch(95% 0.031 335.5)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Label White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0.000 89.9)",
+          "oklch(26% 0.000 89.9)",
+          "oklch(37% 0.000 89.9)",
+          "oklch(48% 0.000 89.9)",
+          "oklch(59% 0.000 89.9)",
+          "oklch(70% 0.000 89.9)",
+          "oklch(82% 0.000 89.9)",
+          "oklch(95% 0.000 89.9)"
+        ]
+      },
+      "paper-blush": {
+        "role": "neutral",
+        "displayName": "Paper Blush",
+        "canonical": "#ffe9f3",
+        "tonalRamp": [
+          "oklch(15% 0.027 348.3)",
+          "oklch(26% 0.027 348.3)",
+          "oklch(37% 0.027 348.3)",
+          "oklch(48% 0.027 348.3)",
+          "oklch(59% 0.027 348.3)",
+          "oklch(70% 0.027 348.3)",
+          "oklch(82% 0.027 348.3)",
+          "oklch(95% 0.027 348.3)"
+        ]
+      },
+      "ground": {
+        "role": "primary",
+        "displayName": "Pack Ground",
+        "canonical": "#d6247a",
+        "tonalRamp": [
+          "oklch(15% 0.200 358.2)",
+          "oklch(26% 0.200 358.2)",
+          "oklch(37% 0.200 358.2)",
+          "oklch(48% 0.200 358.2)",
+          "oklch(59% 0.200 358.2)",
+          "oklch(70% 0.200 358.2)",
+          "oklch(82% 0.200 358.2)",
+          "oklch(95% 0.200 358.2)"
+        ],
+        "darkValue": "#2b0819"
+      },
+      "unfilled": {
+        "role": "primary",
+        "displayName": "Deep Raspberry",
+        "canonical": "#7e1247",
+        "tonalRamp": [
+          "oklch(15% 0.147 357.4)",
+          "oklch(26% 0.147 357.4)",
+          "oklch(37% 0.147 357.4)",
+          "oklch(48% 0.147 357.4)",
+          "oklch(59% 0.147 357.4)",
+          "oklch(70% 0.147 357.4)",
+          "oklch(82% 0.147 357.4)",
+          "oklch(95% 0.147 357.4)"
+        ],
+        "darkValue": "#4a0e2c"
+      },
+      "fill": {
+        "role": "primary",
+        "displayName": "Pack Fill",
+        "canonical": "#d6247a",
+        "tonalRamp": [
+          "oklch(15% 0.200 358.2)",
+          "oklch(26% 0.200 358.2)",
+          "oklch(37% 0.200 358.2)",
+          "oklch(48% 0.200 358.2)",
+          "oklch(59% 0.200 358.2)",
+          "oklch(70% 0.200 358.2)",
+          "oklch(82% 0.200 358.2)",
+          "oklch(95% 0.200 358.2)"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Label Panel",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0.000 89.9)",
+          "oklch(26% 0.000 89.9)",
+          "oklch(37% 0.000 89.9)",
+          "oklch(48% 0.000 89.9)",
+          "oklch(59% 0.000 89.9)",
+          "oklch(70% 0.000 89.9)",
+          "oklch(82% 0.000 89.9)",
+          "oklch(95% 0.000 89.9)"
+        ],
+        "darkValue": "#1b0b13"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Table Ink",
+        "canonical": "#141014",
+        "tonalRamp": [
+          "oklch(15% 0.010 326.0)",
+          "oklch(26% 0.010 326.0)",
+          "oklch(37% 0.010 326.0)",
+          "oklch(48% 0.010 326.0)",
+          "oklch(59% 0.010 326.0)",
+          "oklch(70% 0.010 326.0)",
+          "oklch(82% 0.010 326.0)",
+          "oklch(95% 0.010 326.0)"
+        ],
+        "darkValue": "#fff0f6"
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Muted Plum",
+        "canonical": "#5c525a",
+        "tonalRamp": [
+          "oklch(15% 0.018 332.6)",
+          "oklch(26% 0.018 332.6)",
+          "oklch(37% 0.018 332.6)",
+          "oklch(48% 0.018 332.6)",
+          "oklch(59% 0.018 332.6)",
+          "oklch(70% 0.018 332.6)",
+          "oklch(82% 0.018 332.6)",
+          "oklch(95% 0.018 332.6)"
+        ],
+        "darkValue": "#cfa9bc"
+      },
+      "field": {
+        "role": "neutral",
+        "displayName": "Field",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0.000 89.9)",
+          "oklch(26% 0.000 89.9)",
+          "oklch(37% 0.000 89.9)",
+          "oklch(48% 0.000 89.9)",
+          "oklch(59% 0.000 89.9)",
+          "oklch(70% 0.000 89.9)",
+          "oklch(82% 0.000 89.9)",
+          "oklch(95% 0.000 89.9)"
+        ],
+        "darkValue": "#2b0819"
+      },
+      "track": {
+        "role": "primary",
+        "displayName": "Bar Track",
+        "canonical": "#4a0e2c",
+        "tonalRamp": [
+          "oklch(15% 0.147 357.4)",
+          "oklch(26% 0.147 357.4)",
+          "oklch(37% 0.147 357.4)",
+          "oklch(48% 0.147 357.4)",
+          "oklch(59% 0.147 357.4)",
+          "oklch(70% 0.147 357.4)",
+          "oklch(82% 0.147 357.4)",
+          "oklch(95% 0.147 357.4)"
+        ]
+      },
+      "danger": {
+        "role": "primary",
+        "displayName": "Danger (Deep Raspberry)",
+        "canonical": "#7e1247",
+        "tonalRamp": [
+          "oklch(15% 0.147 357.4)",
+          "oklch(26% 0.147 357.4)",
+          "oklch(37% 0.147 357.4)",
+          "oklch(48% 0.147 357.4)",
+          "oklch(59% 0.147 357.4)",
+          "oklch(70% 0.147 357.4)",
+          "oklch(82% 0.147 357.4)",
+          "oklch(95% 0.147 357.4)"
+        ],
+        "darkValue": "#ff8fbf"
+      },
+      "focus": {
+        "role": "neutral",
+        "displayName": "Focus Ink",
+        "canonical": "#141014",
+        "tonalRamp": [
+          "oklch(15% 0.010 326.0)",
+          "oklch(26% 0.010 326.0)",
+          "oklch(37% 0.010 326.0)",
+          "oklch(48% 0.010 326.0)",
+          "oklch(59% 0.010 326.0)",
+          "oklch(70% 0.010 326.0)",
+          "oklch(82% 0.010 326.0)",
+          "oklch(95% 0.010 326.0)"
+        ],
+        "darkValue": "#fff0f6"
+      },
+      "ground-dark": {
+        "role": "neutral",
+        "displayName": "Night Card",
+        "canonical": "#2b0819",
+        "tonalRamp": [
+          "oklch(15% 0.062 353.9)",
+          "oklch(26% 0.062 353.9)",
+          "oklch(37% 0.062 353.9)",
+          "oklch(48% 0.062 353.9)",
+          "oklch(59% 0.062 353.9)",
+          "oklch(70% 0.062 353.9)",
+          "oklch(82% 0.062 353.9)",
+          "oklch(95% 0.062 353.9)"
+        ]
+      },
+      "unfilled-dark": {
+        "role": "neutral",
+        "displayName": "Night Unfilled",
+        "canonical": "#4a0e2c",
+        "tonalRamp": [
+          "oklch(15% 0.095 354.5)",
+          "oklch(26% 0.095 354.5)",
+          "oklch(37% 0.095 354.5)",
+          "oklch(48% 0.095 354.5)",
+          "oklch(59% 0.095 354.5)",
+          "oklch(70% 0.095 354.5)",
+          "oklch(82% 0.095 354.5)",
+          "oklch(95% 0.095 354.5)"
+        ]
+      },
+      "panel-dark": {
+        "role": "neutral",
+        "displayName": "Night Panel",
+        "canonical": "#1b0b13",
+        "tonalRamp": [
+          "oklch(15% 0.031 349.4)",
+          "oklch(26% 0.031 349.4)",
+          "oklch(37% 0.031 349.4)",
+          "oklch(48% 0.031 349.4)",
+          "oklch(59% 0.031 349.4)",
+          "oklch(70% 0.031 349.4)",
+          "oklch(82% 0.031 349.4)",
+          "oklch(95% 0.031 349.4)"
+        ]
+      },
+      "ink-dark": {
+        "role": "neutral",
+        "displayName": "Night Ink",
+        "canonical": "#fff0f6",
+        "tonalRamp": [
+          "oklch(15% 0.018 351.1)",
+          "oklch(26% 0.018 351.1)",
+          "oklch(37% 0.018 351.1)",
+          "oklch(48% 0.018 351.1)",
+          "oklch(59% 0.018 351.1)",
+          "oklch(70% 0.018 351.1)",
+          "oklch(82% 0.018 351.1)",
+          "oklch(95% 0.018 351.1)"
+        ]
+      },
+      "ink-soft-dark": {
+        "role": "neutral",
+        "displayName": "Night Soft Ink",
+        "canonical": "#cfa9bc",
+        "tonalRamp": [
+          "oklch(15% 0.051 346.8)",
+          "oklch(26% 0.051 346.8)",
+          "oklch(37% 0.051 346.8)",
+          "oklch(48% 0.051 346.8)",
+          "oklch(59% 0.051 346.8)",
+          "oklch(70% 0.051 346.8)",
+          "oklch(82% 0.051 346.8)",
+          "oklch(95% 0.051 346.8)"
+        ]
+      },
+      "field-dark": {
+        "role": "neutral",
+        "displayName": "Night Field",
+        "canonical": "#2b0819",
+        "tonalRamp": [
+          "oklch(15% 0.062 353.9)",
+          "oklch(26% 0.062 353.9)",
+          "oklch(37% 0.062 353.9)",
+          "oklch(48% 0.062 353.9)",
+          "oklch(59% 0.062 353.9)",
+          "oklch(70% 0.062 353.9)",
+          "oklch(82% 0.062 353.9)",
+          "oklch(95% 0.062 353.9)"
+        ]
+      },
+      "danger-dark": {
+        "role": "neutral",
+        "displayName": "Night Danger",
+        "canonical": "#ff8fbf",
+        "tonalRamp": [
+          "oklch(15% 0.145 353.8)",
+          "oklch(26% 0.145 353.8)",
+          "oklch(37% 0.145 353.8)",
+          "oklch(48% 0.145 353.8)",
+          "oklch(59% 0.145 353.8)",
+          "oklch(70% 0.145 353.8)",
+          "oklch(82% 0.145 353.8)",
+          "oklch(95% 0.145 353.8)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Claim Numeral",
+        "purpose": "The one big number on a pack front. Tabular lining figures."
+      },
+      "headline": {
+        "displayName": "Claim Word",
+        "purpose": "Uppercase word under the claim numeral; 2.25rem on the week front."
+      },
+      "brand": {
+        "displayName": "Wordmark",
+        "purpose": "Snacky in the brand strip, rotated -2deg."
+      },
+      "sticker-number": {
+        "displayName": "Sticker Number",
+        "purpose": "The gap on the seal sticker."
+      },
+      "page-title": {
+        "displayName": "Page Title",
+        "purpose": "Entry name on edit and delete pages; quick page title."
+      },
+      "title": {
+        "displayName": "Panel Title",
+        "purpose": "Label panel headings and the table total."
+      },
+      "body": {
+        "displayName": "Body on the Pack",
+        "purpose": "All text on the raspberry ground and on controls; always bold."
+      },
+      "table-row": {
+        "displayName": "Table Row",
+        "purpose": "Entry names and numbers inside the label panel."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Amount, source and fine print, 1rem."
+      },
+      "label": {
+        "displayName": "Label Tag",
+        "purpose": "Uppercase data tags: Heute, Training, the cap strip (weekday and date on past days)."
+      }
+    },
+    "shadows": [
+      {
+        "name": "front-lift",
+        "value": "0 10px 22px -6px rgb(20 16 20 / 0.5)",
+        "purpose": "box-shadow under the pack front; lifts it off a ground the same colour as its fill."
+      },
+      {
+        "name": "sticker",
+        "value": "drop-shadow(0 3px 4px rgb(20 16 20 / 0.4))",
+        "purpose": "filter on the seal sticker; follows the scalloped outline."
+      },
+      {
+        "name": "coupon",
+        "value": "drop-shadow(0 2px 2px rgb(20 16 20 / 0.35))",
+        "purpose": "filter on each coupon; follows the notched outline."
+      },
+      {
+        "name": "focus-ring",
+        "value": "outline: 3px solid var(--focus); outline-offset: 2px; box-shadow: 0 0 0 2px var(--senf)",
+        "purpose": "Shared focus treatment. In the phone nav: white outline at -5px offset with an inset 2px Senf ring. Coupons move the outline to the whole slip at 3px offset."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "--ease-out; the only easing curve."
+      },
+      {
+        "name": "rise",
+        "value": "0.7s ease-out both; scaleY(var(--from, 0)) to 1 from the bottom",
+        "purpose": "The front's fill rises once on load; after a log it starts from the share it had before."
+      },
+      {
+        "name": "solid",
+        "value": "1ms linear, 0.7s delay",
+        "purpose": "On a met day the front and cap switch from unfilled to fill as the rise ends."
+      },
+      {
+        "name": "land",
+        "value": "0.55s ease-out, 0.65s delay; rotate(-18deg) scale(1.3) to rotate(-6deg) scale(0.96) to rotate(-8deg) scale(1)",
+        "purpose": "The met sticker lands on the front."
+      },
+      {
+        "name": "press",
+        "value": "translateY(1px)",
+        "purpose": "Coupon :active."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "@media (prefers-reduced-motion: no-preference)",
+        "purpose": "Every animation above runs only inside this query."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide",
+        "value": "60rem",
+        "purpose": "Two-column split, sticky pack column, nav moves into the brand strip."
+      }
+    ],
+    "tilts": [
+      {
+        "name": "brand",
+        "value": "-2deg"
+      },
+      {
+        "name": "sticker",
+        "value": "-8deg"
+      },
+      {
+        "name": "coupon-flag",
+        "value": "-2deg"
+      }
+    ],
+    "ruleWeights": [
+      {
+        "name": "heavy",
+        "value": "6px",
+        "purpose": "--heavy; opens each label table, closes the total and the week list."
+      },
+      {
+        "name": "hair",
+        "value": "1px",
+        "purpose": "--hair; between meals and rows."
+      }
+    ],
+    "icons": {
+      "grid": "24px",
+      "stroke": "2.5",
+      "linecap": "round",
+      "linejoin": "round",
+      "color": "currentColor",
+      "stickerCheckStroke": "3.5"
+    }
+  },
+  "components": [
+    {
+      "name": "Ground Button",
+      "kind": "button",
+      "refersTo": "button-ground",
+      "description": "Default button on the raspberry ground; day and week navigation.",
+      "html": "<a class=\"ds-btn ds-btn-ground\" href=\"#\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 12H4M10.5 5.5L4 12l6.5 6.5\"/></svg>Vortag</a>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:3rem;padding:0 1.125rem;border:2px solid;border-radius:.25rem;font:700 1.125rem/1.1 \"Snacky Text\",\"Arial Narrow\",sans-serif;text-decoration:none;cursor:pointer}.ds-btn-ground{border-color:var(--print,#141014);background:var(--paper,#fff);color:var(--print,#141014)}.ds-btn-ground:hover{background:#ffe9f3}.ds-btn:focus-visible{outline:3px solid var(--focus,#141014);outline-offset:2px;box-shadow:0 0 0 2px var(--senf,#ffc629)}"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one recommended action on a page.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">Speichern</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;min-height:3rem;padding:0 1.125rem;border:2px solid var(--himbeer,#d6247a);border-radius:.25rem;background:var(--himbeer,#d6247a);color:#fff;font:700 1.125rem/1.1 \"Snacky Text\",\"Arial Narrow\",sans-serif;cursor:pointer}.ds-btn-primary:hover{background:#b81d69}.ds-btn-primary:focus-visible{outline:3px solid var(--focus,#141014);outline-offset:2px;box-shadow:0 0 0 2px var(--senf,#ffc629)}"
+    },
+    {
+      "name": "Ink Button",
+      "kind": "button",
+      "refersTo": "button-ink",
+      "description": "Print-black button on Senf and for confirm steps.",
+      "html": "<div class=\"ds-undo\"><p>Eingetragen: Sojajoghurt, 250 g</p><button class=\"ds-btn-ink\" type=\"button\">Rückgängig</button></div>",
+      "css": ".ds-undo{display:flex;align-items:center;gap:.75rem;padding:.5rem 1rem;background:#ffc629;color:#141014;font:700 1.125rem/1.2 \"Snacky Text\",\"Arial Narrow\",sans-serif}.ds-undo p{flex:1;margin:0}.ds-btn-ink{min-height:3rem;padding:0 1.125rem;border:2px solid #141014;border-radius:.25rem;background:#141014;color:#fff;font:inherit;cursor:pointer}.ds-btn-ink:hover{background:#3a2a36}.ds-btn-ink:focus-visible{outline:3px solid #141014;outline-offset:2px;box-shadow:0 0 0 2px #ffc629}"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Text field with its bold label.",
+      "html": "<label class=\"ds-field\">Menge in Gramm<input class=\"ds-input\" inputmode=\"decimal\" value=\"200\"></label>",
+      "css": ".ds-field{display:grid;gap:.35rem;font:700 1.125rem/1.4 \"Snacky Text\",\"Arial Narrow\",sans-serif;color:var(--ink,#141014)}.ds-input{width:100%;min-height:3rem;padding:0 .75rem;border:2px solid var(--ink,#141014);border-radius:.25rem;background:var(--field,#fff);color:var(--ink,#141014);font:400 1.25rem/1.2 \"Snacky Text\",\"Arial Narrow\",sans-serif;caret-color:#d6247a}.ds-input:focus-visible{outline:3px solid var(--focus,#141014);outline-offset:2px;box-shadow:0 0 0 2px #ffc629}"
+    },
+    {
+      "name": "Bottom Nav",
+      "kind": "nav",
+      "refersTo": "nav-bottom",
+      "description": "Phone navigation bar, print black, current page in Senf with a top mark.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\" aria-current=\"page\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1\"/></svg><span>Heute</span></a><a href=\"#\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3.5\" y=\"5\" width=\"17\" height=\"15.5\" rx=\"1.5\"/><path d=\"M3.5 10h17M8 2.5v4M16 2.5v4\"/></svg><span>Woche</span></a><a href=\"#\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M13.5 2.5L5 13.5h6l-1 8 8.5-11h-6z\"/></svg><span>Schnell</span></a></nav>",
+      "css": ".ds-nav{display:grid;grid-template-columns:repeat(3,1fr);height:56px;background:#141014;font:700 .875rem/1.4 \"Snacky Text\",\"Arial Narrow\",sans-serif}.ds-nav a{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#fff;text-decoration:none}.ds-nav a[aria-current=page]{color:#ffc629}.ds-nav a[aria-current=page]::before{content:\"\";position:absolute;top:0;left:20%;right:20%;height:4px;background:#ffc629}.ds-nav a:focus-visible{outline:3px solid #fff;outline-offset:-5px;box-shadow:inset 0 0 0 2px #ffc629}"
+    },
+    {
+      "name": "Coupon",
+      "kind": "custom",
+      "refersTo": "coupon",
+      "description": "Tear-off quick item; a tap logs it. The flag marks the item that closes the gap.",
+      "html": "<div class=\"ds-coupon-item\"><button class=\"ds-coupon\" type=\"button\"><span class=\"ds-coupon-main\"><span class=\"ds-coupon-name\">Proteinshake (Erbse)</span><span class=\"ds-coupon-amount\">30 g</span></span><span class=\"ds-coupon-stub\">+23,4 g</span></button><span class=\"ds-coupon-flag\">schließt die Lücke</span></div>",
+      "css": ".ds-coupon-item{position:relative;max-width:28rem;margin-top:.8rem;filter:drop-shadow(0 2px 2px rgb(20 16 20 / .35))}.ds-coupon-item:has(.ds-coupon:focus-visible){outline:3px solid #141014;outline-offset:3px}.ds-coupon{--stub:5.5rem;display:grid;grid-template-columns:minmax(0,1fr) var(--stub);width:100%;min-height:3.75rem;padding:0;border:0;background:#fff;color:#141014;font:700 1.125rem/1.4 \"Snacky Text\",\"Arial Narrow\",sans-serif;text-align:left;cursor:pointer;mask:radial-gradient(circle .5rem at calc(100% - var(--stub)) 0,#0000 97%,#000) top/100% 51% no-repeat,radial-gradient(circle .5rem at calc(100% - var(--stub)) 100%,#0000 97%,#000) bottom/100% 51% no-repeat}.ds-coupon:focus-visible{outline:0}.ds-coupon:active{transform:translateY(1px)}.ds-coupon-main{display:grid;align-content:center;padding:.55rem .5rem .55rem .9rem}.ds-coupon-name{font-size:1.25rem;line-height:1.15}.ds-coupon-amount{font-size:1rem;font-weight:400}.ds-coupon-stub{position:relative;display:grid;place-items:center;font:900 1.75rem/1 \"Snacky Claim\",\"Arial Narrow\",sans-serif;white-space:nowrap}.ds-coupon-stub::before{content:\"\";position:absolute;left:0;top:.6rem;bottom:.6rem;width:2px;background:repeating-linear-gradient(to bottom,#141014 0 5px,transparent 5px 9px)}.ds-coupon-flag{position:absolute;top:-.7rem;left:.6rem;padding:.1rem .5rem;background:#ffc629;color:#141014;font:700 .875rem/1.3 \"Snacky Text\",\"Arial Narrow\",sans-serif;transform:rotate(-2deg);pointer-events:none}"
+    },
+    {
+      "name": "Pack Front with Sticker",
+      "kind": "card",
+      "refersTo": "pack-front",
+      "description": "The day front: cap strip, fill rising to the goal share, claim numeral, and the seal sticker with the gap.",
+      "html": "<section class=\"ds-front\"><div class=\"ds-cap\"><p><span class=\"ds-caps\">Ziel</span> 120 g</p></div><svg class=\"ds-fill\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><rect x=\"0\" y=\"25\" width=\"100\" height=\"75\" fill=\"#d6247a\"/></svg><div class=\"ds-sticker\"><svg class=\"ds-seal\" viewBox=\"-50 -50 100 100\" aria-hidden=\"true\"><polygon fill=\"#ffc629\" points=\"50,0 40,8 46,19 34,23 35,35 23,34 19,46 8,40 0,50 -8,40 -19,46 -23,34 -35,35 -34,23 -46,19 -40,8 -50,0 -40,-8 -46,-19 -34,-23 -35,-35 -23,-34 -19,-46 -8,-40 0,-50 8,-40 19,-46 23,-34 35,-35 34,-23 46,-19 40,-8\"/></svg><span class=\"ds-sticker-top\">Noch</span><span class=\"ds-sticker-num\">30<small> g</small></span></div><h1 class=\"ds-claim\"><span class=\"ds-claim-num\">90<span class=\"ds-claim-unit\">g</span></span><span class=\"ds-claim-word\">Protein</span></h1><p class=\"ds-claim-line\">1.800 kcal</p></section>",
+      "css": ".ds-front{position:relative;isolation:isolate;max-width:24rem;padding:3.5rem 1rem 1.25rem;background:#7e1247;color:#fff;box-shadow:0 10px 22px -6px rgb(20 16 20 / .5);font:700 1.125rem/1.4 \"Snacky Text\",\"Arial Narrow\",sans-serif}.ds-cap{position:absolute;z-index:-1;inset:0 0 auto 0;height:2.5rem;padding:0 1rem;border-bottom:2px dashed #fff;background:#7e1247}.ds-cap p{margin:0;line-height:2.375rem;font-size:1rem}.ds-caps{text-transform:uppercase;letter-spacing:.1em}.ds-fill{position:absolute;z-index:-1;inset:2.5rem 0 0 0;width:100%;height:calc(100% - 2.5rem)}.ds-fill rect{transform-box:fill-box;transform-origin:50% 100%;animation:ds-rise .7s cubic-bezier(.16,1,.3,1) both}@media (prefers-reduced-motion:reduce){.ds-fill rect{animation:none}}@keyframes ds-rise{from{transform:scaleY(0)}}.ds-sticker{position:absolute;z-index:1;top:.75rem;right:.75rem;display:grid;place-content:center;justify-items:center;width:8.5rem;aspect-ratio:1;color:#141014;text-align:center;line-height:1;transform:rotate(-8deg);filter:drop-shadow(0 3px 4px rgb(20 16 20 / .4))}.ds-seal{position:absolute;inset:0;z-index:-1;width:100%;height:100%}.ds-sticker-top{font:800 1.125rem/1.05 \"Snacky Display\",\"Arial Black\",sans-serif;text-transform:uppercase;letter-spacing:.02em}.ds-sticker-num{font:900 3.25rem/.95 \"Snacky Claim\",\"Arial Narrow\",sans-serif;letter-spacing:-.02em}.ds-sticker-num small{font:700 1.25rem/1 \"Snacky Text\",\"Arial Narrow\",sans-serif}.ds-claim{margin:0}.ds-claim-num{display:block;font:900 6rem/.9 \"Snacky Claim\",\"Arial Narrow\",sans-serif;font-variant-numeric:tabular-nums lining-nums}.ds-claim-unit{margin-left:.15em;font:700 2.25rem/1 \"Snacky Text\",\"Arial Narrow\",sans-serif}.ds-claim-word{display:block;margin-top:.15rem;font:800 2.75rem/1 \"Snacky Display\",\"Arial Black\",sans-serif;text-transform:uppercase;letter-spacing:.01em}.ds-claim-line{margin:.75rem 0 0}"
+    },
+    {
+      "name": "Label Panel",
+      "kind": "card",
+      "refersTo": "label-panel",
+      "description": "Nährwerttabelle panel: heavy rule opens the table, hairlines between rows, heavy rule before the total.",
+      "html": "<section class=\"ds-panel\"><h2>Nährwerte</h2><p class=\"ds-sub\">Beispieltag</p><div class=\"ds-tbl\"><div class=\"ds-meal\"><h3>08:00 Uhr</h3><span>25 g</span></div><a class=\"ds-row\" href=\"#\"><span><span class=\"ds-name\">Haferflocken</span><span class=\"ds-meta\">60 g · BLS</span></span><span class=\"ds-nums\"><span class=\"ds-p\">8,1 g</span><span class=\"ds-k\">223 kcal</span></span></a><a class=\"ds-row\" href=\"#\"><span><span class=\"ds-name\">Linsensuppe</span><span class=\"ds-meta\">1 Portion · geschätzt</span></span><span class=\"ds-nums\"><span class=\"ds-p ds-est\">≈ 17 g</span><span class=\"ds-k\">310 kcal</span></span></a><div class=\"ds-total\"><span>Summe</span><span>25 g</span></div></div></section>",
+      "css": ".ds-panel{max-width:30rem;padding:1.25rem 1rem 1.5rem;background:var(--panel,#fff);color:var(--ink,#141014);font:400 1.125rem/1.4 \"Snacky Text\",\"Arial Narrow\",sans-serif;font-variant-numeric:tabular-nums lining-nums}.ds-panel h2{margin:0;font:700 1.75rem/1.1 \"Snacky Text\",\"Arial Narrow\",sans-serif}.ds-sub{margin:.25rem 0 .75rem;font-size:1rem}.ds-tbl{border-top:6px solid currentColor}.ds-meal{display:flex;justify-content:space-between;align-items:baseline;padding:.75rem 0 .35rem;font-weight:700;font-size:1.25rem}.ds-meal h3{margin:0;font:inherit}.ds-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.75rem;min-height:3.5rem;padding:.65rem 0;border-top:1px solid currentColor;color:inherit;text-decoration:none}.ds-row>span{display:grid;align-content:start;gap:.1rem}.ds-row:hover{background:color-mix(in srgb,#d6247a 10%,transparent)}.ds-row:hover .ds-name{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.2em}.ds-row:focus-visible{outline:3px solid var(--focus,#141014);outline-offset:2px;box-shadow:0 0 0 2px #ffc629}.ds-name{font-size:1.25rem;line-height:1.2}.ds-meta{font-size:1rem;line-height:1.3}.ds-nums{text-align:right}.ds-p{font-size:1.25rem;font-weight:700;white-space:nowrap}.ds-est{text-decoration:underline dashed;text-decoration-thickness:2px;text-underline-offset:.25em}.ds-k{font-size:.875rem;white-space:nowrap}.ds-total{display:flex;justify-content:space-between;margin-top:.35rem;padding-top:.75rem;border-top:6px solid currentColor;font-size:1.75rem;font-weight:700;line-height:1.1}"
+    },
+    {
+      "name": "Flash Tags",
+      "kind": "chip",
+      "refersTo": "flash-tag",
+      "description": "Square data tags: Senf for today, ink for training and a met meal reference.",
+      "html": "<span class=\"ds-tag ds-tag-senf\">Heute</span> <span class=\"ds-tag ds-tag-ink\">Training</span>",
+      "css": ".ds-tag{display:inline-block;padding:.05rem .45rem;font:700 .875rem/1.3 \"Snacky Text\",\"Arial Narrow\",sans-serif;text-transform:uppercase;letter-spacing:.1em}.ds-tag-senf{background:#ffc629;color:#141014}.ds-tag-ink{background:var(--ink,#141014);color:var(--panel,#fff)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Protein Pack",
+    "overview": "Every screen is a piece of printed packaging. The page ground is raspberry card stock. The day sits on a pack front whose deep raspberry field fills from the bottom to the share of the protein goal, with one huge number as the claim and a mustard seal sticker carrying the gap. Behind it, a white label panel holds the entries as a German nutrition table, ruled the way a real Nährwerttabelle is ruled.\n\nDensity is low on the front and moderate on the label. The front shows one large number, and the table lists the detail in plain condensed type. The day's state is shown in colour: the front's fill rises with the protein eaten, and a met day turns the whole front solid and swaps the sticker to a check and \"Geschafft!\". Motion happens once, on load, and only for that fill and that sticker.\n\nSurfaces read as objects laid on the card: the front, the sticker and the coupons cast soft shadows, and everything else is flat print. Tilts are small and deliberate (the wordmark, the sticker, the coupon flag). The dark scheme keeps the same pack and dims the card to a near-black raspberry; stickers, coupons, buttons and the nav keep their light-scheme inks.",
+    "keyCharacteristics": [
+      "Drenched raspberry ground, no neutral page background.",
+      "One claim numeral per front, set in a compressed heavy face at 6rem.",
+      "A seal sticker in Senf that states the gap, flips on a met day.",
+      "Label panels ruled with one heavy rule and hairlines, like a food label.",
+      "Quick items as tear-off coupons with a perforated protein stub.",
+      "A print-black bottom bar on phones that moves into the brand strip on wide screens.",
+      "A type ramp of nine sizes, defined once as custom properties."
+    ],
+    "rules": [
+      {
+        "name": "The Drenched Ground Rule",
+        "body": "The page ground is always the pack colour, `ground`. There is no grey or white page behind the pack; white appears only as a printed object on it (label panel, coupon, button).",
+        "section": "colors"
+      },
+      {
+        "name": "The State Colours the Front Rule",
+        "body": "The day's protein state is shown by how much of the front is filled with Himbeer, from the bottom up. A met day fills the whole front, cap strip included. Numbers and words carry the same state, so colour is never the only signal.",
+        "section": "colors"
+      },
+      {
+        "name": "The Spot Colour Rule",
+        "body": "Senf is a patch or a mark, never text on raspberry. Text on Senf is print black.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Voices Rule",
+        "body": "Text on the raspberry ground is bold (700). The label panel resets to regular (400), and inside it bold marks only headings, protein numbers and the total.",
+        "section": "typography"
+      },
+      {
+        "name": "The Numerals-Only Claim Rule",
+        "body": "Snacky Claim sets numbers only: the front claim, the sticker gap and the coupon stub. Words on the pack use Snacky Display.",
+        "section": "typography"
+      },
+      {
+        "name": "The Label Carries Data Rule",
+        "body": "Uppercase letter-spaced type is used only for tags and field names that carry a value or a status. It never sits as a decorative line above a heading.",
+        "section": "typography"
+      },
+      {
+        "name": "The Printed Object Rule",
+        "body": "A shadow means \"a separate piece stuck on the pack\". Panels and controls stay flat, and every shadow is soft and blurred, never hard-edged.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Two Rules Rule",
+        "body": "Inside a label table there are exactly two rule weights, 6px and 1px, in the current ink. Dashed lines, 2px borders and the nav mark belong to the pack and controls, never to the table. The dashed underline on an estimated number is text decoration, not a rule.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "**Do** keep the page ground on `ground` and put white only on printed objects (panel, coupon, ground button).",
+      "**Do** show the day's state as the Himbeer fill share of the front, and repeat it in the sticker's words and the table's total.",
+      "**Do** set every claim numeral in Snacky Claim 900 with tabular lining figures, one claim per front.",
+      "**Do** open every label table with the 6px rule and separate rows with 1px hairlines.",
+      "**Do** put print-black text on Senf and keep Senf to seals, flags, tags, the undo band and the nav mark.",
+      "**Do** keep touch targets at 2.75rem or more and draw focus with the 3px outline plus the Senf ring.",
+      "**Do** gate every animation behind `prefers-reduced-motion: no-preference` and keep motion to the fill rise and the sticker landing."
+    ],
+    "donts": [
+      "**Don't** add a third rule weight, a dashed line or a coloured rule inside a label table.",
+      "**Don't** set Senf text on raspberry or use Senf for body copy.",
+      "**Don't** put shadows on the label panel, buttons or tags, and don't use hard offset shadows anywhere.",
+      "**Don't** round the front, the panel, coupons or tags; the 0.25rem radius belongs to controls.",
+      "**Don't** add an uppercase line above a heading; uppercase is for tags and field names that carry data.",
+      "**Don't** add rings, gauges or progress cards to show protein; the front's fill and the week bars carry it.",
+      "**Don't** use colour alone for state; every state has a word or a number beside it."
+    ]
+  }
+}
