@@ -9,7 +9,7 @@
   <div><dt>Energie</dt><dd>{{ entry.nutrients.kcal|num }} kcal</dd></div>
   <div><dt>Fett</dt><dd>{{ entry.nutrients.fat_g|num(1) }} g</dd></div>
   <div><dt>Kohlenhydrate</dt><dd>{{ entry.nutrients.carbs_g|num(1) }} g</dd></div>
-  <div><dt>Ballaststoffe</dt><dd>{{ entry.nutrients.fibre_g|num(1) }} g</dd></div>
+  <div><dt>Ballaststoffe</dt><dd>{{ value_label(entry.nutrients.fibre_g, "g", 1) }}</dd></div>
   <div><dt>Quelle</dt><dd>{{ SOURCE_LABELS[entry.source] }}</dd></div>
   <div><dt>Eingetragen über</dt><dd>{{ ORIGIN_LABELS[entry.origin] }}</dd></div>
   {% if entry.confidence %}<div><dt>Sicherheit</dt><dd>{{ CONFIDENCE_LABELS[entry.confidence] }}</dd></div>{% endif %}

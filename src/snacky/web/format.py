@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
-from snacky.model import Confidence, GoalKind, GoalStatus, Origin, Source
+from snacky.model import Confidence, Entry, GoalKind, GoalStatus, Origin, Source
 
 WEEKDAYS = ("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag")
 MONTHS = (
@@ -117,6 +117,93 @@ def goal_view(status: GoalStatus | None, unit: str) -> dict | None:
         "fill": min(value / limit, 1.0) if limit else 0.0,
         "limit": limit,
     }
+
+
+NBSP = "\u00a0"
+NO_VALUE = "keine Angabe"
+
+
+def amount_label(entry: Entry) -> str:
+    """ "150 g", "1 Portion" or "2,5 Portionen", with a no-break space so the
+    number never wraps away from its unit."""
+    if entry.grams:
+        return f"{amount(entry.grams)}{NBSP}g"
+    if entry.servings:
+        unit = "Portion" if entry.servings == 1 else "Portionen"
+        return f"{amount(entry.servings)}{NBSP}{unit}"
+    return ""
+
+
+def value_label(value: float | None, unit: str, digits: int = 0) -> str:
+    """A nutrient value, or "keine Angabe" when the source does not report it.
+    A dash would read as zero."""
+    if value is None:
+        return NO_VALUE
+    return f"{num(value, digits)}{NBSP}{unit}"
+
+
+def protein_label(entry: Entry) -> str:
+    """Protein of one entry. An estimate is whole grams with a leading "≈ ",
+    so it does not claim a precision it does not have."""
+    protein = entry.nutrients.protein_g
+    if is_estimate(entry.source, entry.confidence):
+        return f"≈ {num(protein, 0)}{NBSP}g"
+    return f"{num(protein, 1)}{NBSP}g"
+
+
+def protein_estimated_share(entries: list[Entry]) -> float:
+    """Share of the protein that comes from estimates, 0..1."""
+    total = sum(e.nutrients.protein_g for e in entries)
+    if total <= 0:
+        return 0.0
+    estimated = sum(e.nutrients.protein_g for e in entries if is_estimate(e.source, e.confidence))
+    return min(estimated / total, 1.0)
+
+
+def protein_view(status: GoalStatus | None, *, day: date, today: date, has_entries: bool) -> dict:
+    """The protein goal for one day. Keeps every key `goal_view` has, except
+    that the sentence `goal_view` calls "gap" is now "gap_text", because "gap"
+    is the number of grams still missing."""
+    view = goal_view(status, "g") or {}
+    view["gap_text"] = view.pop("gap", "")
+    lo = status.goal.min if status is not None else None
+    eaten = status.value if status is not None else 0.0
+    if status is None or lo is None or lo <= 0:
+        state, limit, met = "nogoal", None, False
+    else:
+        limit, met = lo, status.met
+        if not has_entries:
+            state = "empty"
+        elif met:
+            state = "met"
+        elif day >= today:
+            state = "open"
+        else:
+            state = "missed"
+    view.update(
+        eaten=eaten,
+        limit=limit,
+        gap=max(limit - eaten, 0.0) if limit else 0.0,
+        over=max(eaten - limit, 0.0) if limit else 0.0,
+        fraction=min(eaten / limit, 1.0) if limit else 0.0,
+        met=met,
+        state=state,
+    )
+    return view
+
+
+def gap_closer(quick: list[dict], gap: float) -> None:
+    """Marks the one quick item that best closes the protein gap: the smallest
+    that reaches it, else the largest. Items start with "closes_gap" False."""
+    if not quick:
+        return
+    reaching = [q for q in quick if q["nutrients"].protein_g >= gap - 1e-9]
+    best = (
+        min(reaching, key=lambda q: q["nutrients"].protein_g)
+        if reaching
+        else max(quick, key=lambda q: q["nutrients"].protein_g)
+    )
+    best["closes_gap"] = True
 
 
 def week_start(day: date) -> date:

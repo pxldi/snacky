@@ -13,3 +13,13 @@ window.addEventListener("pageshow", (event) => {
   if (!event.persisted) return;
   for (const button of document.querySelectorAll("button[type=submit]")) button.disabled = false;
 });
+
+// The undo notice is only valid for a couple of minutes. Dropping the query
+// keeps a reload or a bookmark from showing it again.
+{
+  const url = new URL(window.location.href);
+  if (url.searchParams.has("undo")) {
+    url.searchParams.delete("undo");
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+  }
+}

@@ -13,9 +13,9 @@
    <div class="bar">
     <span class="brand">Snacky</span>
     <nav aria-label="Hauptmenü">
-      <a href="/"{% if path == "/" %} aria-current="page"{% endif %}>Heute</a>
-      <a href="/week"{% if path == "/week" %} aria-current="page"{% endif %}>Woche</a>
-      <a href="/quick"{% if path == "/quick" %} aria-current="page"{% endif %}>Schnell</a>
+      <a href="/"{% if nav_current == "day" %} aria-current="page"{% endif %}>Heute</a>
+      <a href="/week"{% if nav_current == "week" %} aria-current="page"{% endif %}>Woche</a>
+      <a href="/quick"{% if nav_current == "quick" %} aria-current="page"{% endif %}>Schnell</a>
     </nav>
    </div>
   </header>

@@ -29,9 +29,9 @@
   <div class="hero">
     <h2>Protein</h2>
     <p class="hero-number"><span class="big">{{ summary.totals.protein_g|num }}</span> <span class="unit">g</span></p>
-    {% if protein %}
-    <progress class="{{ 'met' if protein.met }}" max="1" value="{{ '%.3f'|format(protein.fill) }}">{{ protein.gap }}</progress>
-    <p class="goal">Ziel: {{ protein.target }}<br>{{ protein.gap|upfirst }}</p>
+    {% if protein.state != "nogoal" %}
+    <progress class="{{ 'met' if protein.met }}" max="1" value="{{ '%.3f'|format(protein.fill) }}">{{ protein.gap_text }}</progress>
+    <p class="goal">Ziel: {{ protein.target }}<br>{{ protein.gap_text|upfirst }}</p>
     {% else %}
     <p class="goal">Kein Proteinziel gesetzt.</p>
     {% endif %}

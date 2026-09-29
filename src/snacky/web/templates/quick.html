@@ -2,6 +2,13 @@
 {% block title %}Schnellwahl · Snacky{% endblock %}
 {% block content %}
 <h1>Schnellwahl</h1>
+{% if undo %}
+<form class="notice" method="post" action="/entries/{{ undo.id }}/undo">
+  <p>Eingetragen: {{ undo.name }}{% if undo.grams %}, {{ undo.grams|amount }} g{% endif %}.</p>
+  <input type="hidden" name="next" value="/quick">
+  <button type="submit" class="btn">Rückgängig</button>
+</form>
+{% endif %}
 {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
 
 <section aria-labelledby="list-h">
@@ -20,6 +27,10 @@
         <span class="e-p">{{ i.nutrients.protein_g|num(1) }} g</span>
         <span class="e-k">{{ i.nutrients.kcal|num }} kcal</span>
       </span>
+      <form method="post" action="/quick/{{ i.item.id }}/log">
+        <input type="hidden" name="next" value="/quick">
+        <button type="submit" class="btn" aria-label="{{ i.item.label }} eintragen">Eintragen</button>
+      </form>
       <form method="post" action="/quick/{{ i.item.id }}/remove">
         <button type="submit" class="btn" aria-label="{{ i.item.label }} entfernen">Entfernen</button>
       </form>
