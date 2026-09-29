@@ -1,0 +1,17 @@
+{# Icons share one 24 px grid and one 2.5 stroke. #}
+{% macro icon(paths) %}<svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">{{ paths|safe }}</svg>{% endmacro %}
+{% macro check() %}{{ icon('<path d="M4 12.5l5.5 5.5L20 6.5"/>') }}{% endmacro %}
+{% macro arrow_left() %}{{ icon('<path d="M20 12H4M10.5 5.5L4 12l6.5 6.5"/>') }}{% endmacro %}
+{% macro arrow_right() %}{{ icon('<path d="M4 12h16M13.5 5.5L20 12l-6.5 6.5"/>') }}{% endmacro %}
+{% macro nav_today() %}{{ icon('<circle cx="12" cy="12" r="4"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/>') }}{% endmacro %}
+{% macro nav_week() %}{{ icon('<rect x="3.5" y="5" width="17" height="15.5" rx="1.5"/><path d="M3.5 10h17M8 2.5v4M16 2.5v4"/>') }}{% endmacro %}
+{% macro nav_quick() %}{{ icon('<path d="M13.5 2.5L5 13.5h6l-1 8 8.5-11h-6z"/>') }}{% endmacro %}
+
+{# The fill of a pack front. y and height are computed here because the
+   content-security policy forbids style attributes. #}
+{% macro fill(share) %}
+{% set pct = (share * 100)|round(2) %}
+<svg class="fill-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+  <rect class="fill" x="0" y="{{ 100 - pct }}" width="100" height="{{ pct }}"/>
+</svg>
+{% endmacro %}

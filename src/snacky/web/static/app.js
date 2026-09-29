@@ -23,3 +23,23 @@ window.addEventListener("pageshow", (event) => {
     window.history.replaceState(null, "", url.pathname + url.search + url.hash);
   }
 }
+
+// Live preview of a search result: the server prints the values for the
+// default amount, this keeps them in step while the grams change.
+for (const form of document.querySelectorAll("form.result")) {
+  const input = form.querySelector("input[data-grams]");
+  if (!input) continue;
+  const protein100 = Number(form.dataset.protein100);
+  const kcal100 = Number(form.dataset.kcal100);
+  const show = (selector, value, digits) => {
+    const out = form.querySelector(selector);
+    if (out) out.textContent = value.toLocaleString("de-DE", { maximumFractionDigits: digits });
+  };
+  input.addEventListener("input", () => {
+    const grams = Number(input.value.trim().replace(",", "."));
+    if (!Number.isFinite(grams) || grams <= 0) return;
+    show("[data-out-grams]", grams, 1);
+    show("[data-out-protein]", (grams * protein100) / 100, 1);
+    show("[data-out-kcal]", (grams * kcal100) / 100, 0);
+  });
+}
