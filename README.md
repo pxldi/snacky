@@ -6,7 +6,7 @@ photo of a label or a plate), and the assistant calls Snacky's MCP tools.
 Snacky looks the food up in a nutrient database and keeps the log. A small
 web UI shows the day and the week and lets you correct entries.
 
-Status: early. Nothing here runs yet.
+Status: early. The MCP server runs; the web UI is not built yet.
 
 ## How it works
 
@@ -20,6 +20,31 @@ Status: early. Nothing here runs yet.
   on another.
 
 `docs/ARCHITECTURE.md` has the data model and the interfaces.
+
+## Running
+
+    docker run --read-only -v snacky-data:/data -p 8000:8000 ghcr.io/pxldi/snacky:<tag>
+
+The image contains the BLS index at `/app/data/bls.sqlite`, converted from the
+pinned BLS download at build time. Without that file the server starts and
+skips BLS, with a warning. `/data` is the only path written at runtime.
+
+| Port | Serves |
+|---|---|
+| 8000 | MCP over streamable HTTP at `/mcp`, stateless, and `/health` (reports the build). Meant for the assistant only. |
+| 8080 | The web UI. Not built yet; until then only 8000 is served. |
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `SNACKY_DB` | `/data/snacky.sqlite` | the log |
+| `SNACKY_BLS` | `/app/data/bls.sqlite` | the BLS index |
+| `SNACKY_TZ` | `Europe/Berlin` | day boundaries and meal grouping |
+| `SNACKY_MEAL_GAP_MIN` | `90` | minutes between entries that start a new meal |
+| `SNACKY_OFF_USER_AGENT` | `snacky/0.1 (+https://github.com/pxldi/snacky)` | sent to Open Food Facts |
+| `SNACKY_MCP_PORT`, `SNACKY_WEB_PORT` | `8000`, `8080` | listen ports |
+| `TANDOOR_URL`, `TANDOOR_TOKEN` | unset | enables `log_recipe_portion` |
+| `OPENGYM_URL`, `OPENGYM_TOKEN` | unset | adds training days and body weight to `week_summary` |
+| `IMAGE_SHA` | set by the image | the `build` value in `/health` |
 
 ## Data sources
 
