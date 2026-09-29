@@ -630,3 +630,9 @@ async def test_add_serving_updates_the_same_label(mcp):
     out = await call(mcp, "add_serving", food_ref="bls:H861000", label="1 Scoop", grams=32)
     assert out["servings"] == [{"label": "1 Scoop", "grams": 32.0}]
     assert out["food"]["ref"].startswith("food:")
+
+
+@respx.mock
+async def test_an_unexpected_off_status_is_a_readable_error(mcp):
+    respx.get(f"{OFF}/api/v2/product/4000000000777.json").respond(403)
+    await fails(mcp, "log_barcode", "403", barcode="4000000000777", grams=10)

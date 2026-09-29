@@ -14,6 +14,7 @@ from collections.abc import Callable
 from datetime import date, datetime, time, timedelta
 from typing import Annotated, Any, Literal
 
+import httpx
 from mcp.server import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.server.transport_security import TransportSecuritySettings
@@ -270,7 +271,7 @@ def create_mcp(
         return out
 
     @mcp.tool()
-    @guarded(LookupFailed, OffUnavailable)
+    @guarded(LookupFailed, OffUnavailable, httpx.HTTPStatusError)
     async def search_food(
         query: Annotated[
             str, Field(description="Food name, German or English, e.g. 'Tofu' or 'Haferflocken'.")
@@ -288,7 +289,7 @@ def create_mcp(
         }
 
     @mcp.tool()
-    @guarded(LookupFailed, OffUnavailable, NotFound, ValueError)
+    @guarded(LookupFailed, OffUnavailable, httpx.HTTPStatusError, NotFound, ValueError)
     async def log_food(
         food_ref: Annotated[
             str, Field(description="A ref from search_food: food:<id>, bls:<code> or off:<barcode>.")
@@ -309,7 +310,7 @@ def create_mcp(
         return log_food_entry(food, grams, serving, eaten_at)
 
     @mcp.tool()
-    @guarded(LookupFailed, OffUnavailable, NotFound, ValueError)
+    @guarded(LookupFailed, OffUnavailable, httpx.HTTPStatusError, NotFound, ValueError)
     async def log_barcode(
         barcode: Annotated[str, Field(description="The product barcode digits (EAN/UPC).")],
         grams: Annotated[
@@ -702,7 +703,7 @@ def create_mcp(
         }
 
     @mcp.tool()
-    @guarded(LookupFailed, OffUnavailable, NotFound, ValueError)
+    @guarded(LookupFailed, OffUnavailable, httpx.HTTPStatusError, NotFound, ValueError)
     async def add_serving(
         food_ref: Annotated[str, Field(description="A ref from search_food.")],
         label: Annotated[str, Field(description="Serving name, e.g. '1 Scoop'.")],
