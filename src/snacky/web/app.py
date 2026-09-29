@@ -43,12 +43,11 @@ _UNDO_STALE = (
     "Lösche den Eintrag sonst über die Bearbeitung."
 )
 
-
 # Nothing loads from outside this origin and nothing runs inline, so the
 # policy can be this strict.
 _CSP = (
     "default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; "
-    "form-action 'self'; base-uri 'none'; frame-ancestors 'none'"
+    "font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"
 )
 
 
@@ -177,6 +176,9 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
         date_long=fmt.date_long,
         date_short=fmt.date_short,
         clock=fmt.clock,
+        amount_label=fmt.amount_label,
+        protein_label=fmt.protein_label,
+        value_label=fmt.value_label,
         is_estimate=fmt.is_estimate,
         SOURCE_LABELS=fmt.SOURCE_LABELS,
         CONFIDENCE_LABELS=fmt.CONFIDENCE_LABELS,
@@ -186,6 +188,7 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
     )
 
     def render(request: Request, name: str, status: int = 200, **context: Any) -> HTMLResponse:
+        context.setdefault("nav_current", None)
         page = env.get_template(name).render(path=request.url.path, **context)
         return HTMLResponse(page, status_code=status)
 
@@ -222,11 +225,18 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
             }
             for meal in summary.meals
         ]
+        entries = [e for meal in summary.meals for e in meal.entries]
+        protein = fmt.protein_view(
+            by_nutrient.get("protein_g"), day=day, today=today, has_entries=bool(entries)
+        )
         quick = []
         if day == today:
             for item in store.quick_items():
                 food = store.get_food(item.food_id)
-                quick.append({"item": item, "nutrients": food.per_100g.for_grams(item.grams)})
+                nutrients = food.per_100g.for_grams(item.grams)
+                quick.append({"item": item, "nutrients": nutrients, "closes_gap": False})
+            if protein["state"] == "open":
+                fmt.gap_closer(quick, protein["gap"])
         undo = undo_entry(request)
         return render(
             request,
@@ -236,7 +246,11 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
             today=today,
             prev_day=day - timedelta(days=1),
             next_day=day + timedelta(days=1),
-            protein=fmt.goal_view(by_nutrient.get("protein_g"), "g"),
+            protein=protein,
+            protein_estimated_share=fmt.protein_estimated_share(entries),
+            nav_current="day" if day == today else None,
+            is_today=day == today,
+            is_past=day < today,
             kcal=fmt.goal_view(by_nutrient.get("kcal"), "kcal"),
             meals=meals,
             meal_min=meal_min,
@@ -254,7 +268,9 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
             row["fill"] = row["protein"] / scale * 100
             row["goal_x"] = None if not row["limit"] else row["limit"] / scale * 100
             row["training"] = workouts.get(row["day"], [])
+            row["state"] = _week_state(row, today)
         logged = [r["protein"] for r in rows if r["kcal"] > 0]
+        counted = [r for r in rows if r["day"] <= today]
         return render(
             request,
             "week.html",
@@ -265,15 +281,33 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
             next_start=start + timedelta(days=7),
             rows=rows,
             average=sum(logged) / len(logged) if logged else None,
+            met_count=sum(1 for r in counted if r["met"]),
+            counted_days=len(counted),
+            has_goal=any(r["has_goal"] for r in rows),
+            nav_current="week",
             opengym_failed=failed,
             has_opengym=opengym is not None,
         )
+
+    def _week_state(row: dict, today: date) -> str:
+        if row["day"] > today:
+            return "future"
+        if row["day"] == today:
+            return "today"
+        if row["count"] == 0:
+            return "empty"
+        if row["met"]:
+            return "met"
+        # Without a goal nothing was missed.
+        return "missed" if row["has_goal"] else "logged"
 
     async def _week(start: date) -> tuple[list[dict], dict[date, list], bool]:
         rows = []
         for summary in store.week_summary(start):
             protein = next((s for s in summary.goals if s.goal.nutrient == "protein_g"), None)
             view = fmt.goal_view(protein, "g")
+            count = sum(len(m.entries) for m in summary.meals)
+            goal = protein.goal.min if protein and protein.goal.min else None
             rows.append(
                 {
                     "day": summary.day,
@@ -281,8 +315,10 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
                     "kcal": summary.totals.kcal,
                     "met": bool(view and view["met"]),
                     "limit": view["limit"] if view else None,
+                    "goal": goal,
+                    "fraction": min(summary.totals.protein_g / goal, 1.0) if goal else None,
                     "has_goal": view is not None,
-                    "count": sum(len(m.entries) for m in summary.meals),
+                    "count": count,
                 }
             )
         workouts: dict[date, list] = {}
@@ -353,6 +389,7 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
             results=results,
             error=error,
             undo=undo_entry(request),
+            nav_current="quick",
         )
 
     async def quick_page(request: Request) -> Response:
@@ -408,7 +445,16 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
 
     async def api_day(request: Request) -> Response:
         day = _day_arg(request.query_params.get("day"), _today())
-        return JSONResponse(_jsonable(store.day_summary(day)))
+        summary = store.day_summary(day)
+        entries = [e for meal in summary.meals for e in meal.entries]
+        goal = next((s for s in summary.goals if s.goal.nutrient == "protein_g"), None)
+        protein = fmt.protein_view(goal, day=day, today=_today(), has_entries=bool(entries))
+        body = _jsonable(summary)
+        body["protein"] = {
+            k: protein[k] for k in ("eaten", "limit", "gap", "over", "fraction", "met", "state")
+        }
+        body["protein_estimated_share"] = fmt.protein_estimated_share(entries)
+        return JSONResponse(body)
 
     async def api_week(request: Request) -> Response:
         start = _day_arg(request.query_params.get("start"), fmt.week_start(_today()))
