@@ -1,3 +1,4 @@
+import sqlite3
 from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -108,6 +109,28 @@ def test_no_source_ref_always_inserts(store):
 def test_get_food_not_found(store):
     with pytest.raises(NotFound):
         store.get_food(999)
+
+
+def test_failed_upsert_leaves_nothing_behind(store):
+    bad = food("Oat Flakes", "r1", servings=(Serving("ok", 10), Serving("bad", None)))  # type: ignore[arg-type]
+    with pytest.raises(sqlite3.IntegrityError):
+        store.upsert_food(bad)
+    assert store.search_foods("oat") == []
+    assert store._db.execute("SELECT count(*) FROM foods").fetchone()[0] == 0
+    assert store._db.execute("SELECT count(*) FROM servings").fetchone()[0] == 0
+    store.upsert_food(food("Oat Flakes", "r1"))  # the lock and the connection still work
+    assert len(store.search_foods("oat")) == 1
+
+
+def test_search_index_follows_update_and_delete(store):
+    f = store.upsert_food(food("Oat Flakes", "r1", brand="Acme"))
+    store.upsert_food(food("Barley Groats", "r1", brand="Zeta"))
+    assert store.search_foods("oat") == []
+    assert store.search_foods("acme") == []
+    assert [x.id for x in store.search_foods("zeta")] == [f.id]
+    store._db.execute("DELETE FROM foods WHERE id = ?", (f.id,))
+    assert store.search_foods("barley") == []
+    store._db.execute("INSERT INTO foods_fts (foods_fts) VALUES ('integrity-check')")
 
 
 def test_add_serving(store):
@@ -413,6 +436,20 @@ def test_fall_back_day_is_25_hours(store):
     assert ids == [first.id, early.id, late.id, last.id]
     assert at("2026-10-26", 0).astimezone(UTC) - at("2026-10-25", 0).astimezone(UTC) == timedelta(hours=25)
     assert early.eaten_at.utcoffset() != late.eaten_at.utcoffset()
+
+
+def test_meal_gap_counts_real_minutes_across_spring_forward(store):
+    a = log(store, at("2026-03-29", 1, 10))
+    b = log(store, at("2026-03-29", 3, 30))  # 80 real minutes later, 140 on the wall clock
+    s = store.day_summary(date(2026, 3, 29))
+    assert [[e.id for e in m.entries] for m in s.meals] == [[a.id, b.id]]
+
+
+def test_meal_gap_counts_real_minutes_across_fall_back(store):
+    a = log(store, at("2026-10-25", 2, 10, fold=0))
+    b = log(store, at("2026-10-25", 2, 50, fold=1))  # 100 real minutes later, 40 on the wall clock
+    s = store.day_summary(date(2026, 10, 25))
+    assert [[e.id for e in m.entries] for m in s.meals] == [[a.id], [b.id]]
 
 
 def test_estimated_share(store):
