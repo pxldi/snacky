@@ -130,6 +130,10 @@ def _utc_text(value: datetime) -> str:
     return value.astimezone(UTC).isoformat(timespec="microseconds")
 
 
+def _utc(value: datetime) -> datetime:
+    return value.astimezone(UTC)
+
+
 def _from_text(value: str) -> datetime:
     # Local time on the way out, so the UI shows what the eater saw.
     return datetime.fromisoformat(value).astimezone(config.TZ)
@@ -519,7 +523,9 @@ class Store:
 
         groups: list[list[Entry]] = []
         for entry in entries:
-            if groups and entry.eaten_at - groups[-1][-1].eaten_at < config.MEAL_GAP:
+            # Both sides share one tzinfo, and Python then subtracts wall clocks, which is
+            # wrong across a DST change. UTC gives the real elapsed time.
+            if groups and _utc(entry.eaten_at) - _utc(groups[-1][-1].eaten_at) < config.MEAL_GAP:
                 groups[-1].append(entry)
             else:
                 groups.append([entry])

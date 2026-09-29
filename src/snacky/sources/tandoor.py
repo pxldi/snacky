@@ -24,6 +24,13 @@ None means the ingredient could not be converted to the food's property unit,
 or the food has no value for that type. `missing_unit: true` marks an amount
 without a unit. An ingredient with no amount counts as 0 and is not missing.
 The entries carry no `fdc_id`, so the types come from /api/property-type/.
+
+Writes (drf-writable-nested 0.7.2, pinned in Tandoor's requirements): a food
+PATCH with `properties` updates listed items that carry an `id`, creates the
+ones without, and unlinks every property of the food that is not listed. So the
+whole list is always sent back. `properties_food_unit` must be a full unit
+object; an object with only an `id` fails in UnitSerializer.update, which reads
+`name`.
 """
 
 from __future__ import annotations
@@ -79,6 +86,8 @@ class PropertyType:
     name: str
     unit: str | None = None
     fdc_id: int | None = None
+    order: int | None = None
+    description: str | None = None
 
 
 @dataclass(frozen=True)
@@ -101,7 +110,18 @@ def _num(value: Any) -> float | None:
 
 
 def _to_type(raw: dict[str, Any]) -> PropertyType:
-    return PropertyType(id=raw["id"], name=raw["name"], unit=raw.get("unit"), fdc_id=raw.get("fdc_id"))
+    return PropertyType(
+        id=raw["id"],
+        name=raw["name"],
+        unit=raw.get("unit"),
+        fdc_id=raw.get("fdc_id"),
+        order=raw.get("order"),
+        description=raw.get("description"),
+    )
+
+
+def _is_kj(t: PropertyType) -> bool:
+    return (t.unit or "").strip().casefold() == "kj"
 
 
 def _to_food(raw: dict[str, Any]) -> TandoorFood:
@@ -226,6 +246,9 @@ class TandoorClient:
             "carbs_g": per_100g.carbs_g,
             "fibre_g": per_100g.fibre_g,
         }
+        # A kcal type kept in kJ takes kJ, the same conversion recipe_nutrition undoes.
+        if _is_kj(types["kcal"]):
+            values["kcal"] = per_100g.kcal * KJ_PER_KCAL
         wanted = {types[k].id: round(v, 4) for k, v in values.items() if v is not None}
 
         properties: list[dict[str, Any]] = []
@@ -235,12 +258,14 @@ class TandoorClient:
             properties.append(prop)
         for t in types.values():
             if t.id in wanted:
-                properties.append(
-                    {
-                        "property_amount": wanted[t.id],
-                        "property_type": {"id": t.id, "name": t.name, "unit": t.unit, "fdc_id": t.fdc_id},
-                    }
-                )
+                # A new property is saved by a non-partial serializer, which puts the nested
+                # type's `order` back to 0 unless it is sent along.
+                property_type = {"id": t.id, "name": t.name, "unit": t.unit, "fdc_id": t.fdc_id}
+                if t.order is not None:
+                    property_type["order"] = t.order
+                if t.description is not None:
+                    property_type["description"] = t.description
+                properties.append({"property_amount": wanted[t.id], "property_type": property_type})
 
         payload = {
             "properties_food_amount": 100,
@@ -272,12 +297,14 @@ class TandoorClient:
                 totals[key] = None
                 continue
             total = _num(entry.get("total_value")) or 0.0
-            if key == "kcal" and (t.unit or "").strip().casefold() == "kj":
+            if key == "kcal" and _is_kj(t):
                 total /= KJ_PER_KCAL
             totals[key] = total
             incomplete = False
             for fv in (entry.get("food_values") or {}).values():
-                if fv.get("value") is None or fv.get("missing_unit"):
+                # missing_conversion can sit on a food that has a value, when the same food
+                # appears again in a unit Tandoor cannot convert.
+                if fv.get("value") is None or fv.get("missing_unit") or fv.get("missing_conversion"):
                     incomplete = True
                     if key in REQUIRED:
                         name = (fv.get("food") or {}).get("name", "unknown food")

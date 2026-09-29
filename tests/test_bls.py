@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 from snacky.model import Source
-from snacky.sources.bls import BlsIndex, build
+from snacky.sources.bls import _SCHEMA, BlsIndex, build
 
 FIXTURE = Path(__file__).parent / "fixtures" / "bls" / "BLS_4_0_Daten_2025_DE_sample.xlsx"
 
@@ -94,7 +94,7 @@ def test_compound_written_as_one_word(index):
 
 def test_umlauts_fold(index):
     assert index.search("Sojadrink ungesüßt")[0].name == "Sojadrink ungesüßt"
-    assert index.search("SOJADRINK UNGESUSST") == []  # ß is not an accent, ss does not match it
+    assert index.search("SOJADRINK UNGESUSST")[0].name == "Sojadrink ungesüßt"  # ss stands for ß
     assert index.search("sojadrink ungesußt")[0].name == "Sojadrink ungesüßt"
     assert index.search("Hahnchen")[0].name.startswith("Hähnchen")
     assert index.search("Hähnchen")[0].name.startswith("Hähnchen")
@@ -132,3 +132,81 @@ def test_opens_read_only(db):
 def test_missing_file_is_an_error(tmp_path):
     with pytest.raises(sqlite3.OperationalError):
         BlsIndex(tmp_path / "nope.sqlite")
+
+
+def mini_index(tmp_path, rows):
+    """An index of (code, name) rows with zero nutrients, for ranking tests."""
+    out = tmp_path / "mini.sqlite"
+    con = sqlite3.connect(out)
+    con.executescript(_SCHEMA)
+    for code, name in rows:
+        con.execute("INSERT INTO foods VALUES (?, ?, 0, 0, 0, 0, NULL, '{}')", (code, name))
+        con.execute("INSERT INTO foods_fts (name, code) VALUES (?, ?)", (name, code))
+    con.commit()
+    con.close()
+    return BlsIndex(out)
+
+
+def test_ascii_spellings_find_umlaut_names(tmp_path):
+    idx = mini_index(
+        tmp_path,
+        [
+            ("M111000", "Käse Edamer"),
+            ("C111000", "Müsli Basismischung"),
+            ("G322100", "Grünkohl roh"),
+            ("C222000", "Grieß Weizen"),
+        ],
+    )
+    assert names(idx.search("Kaese")) == ["Käse Edamer"]
+    assert names(idx.search("Muesli")) == ["Müsli Basismischung"]
+    assert names(idx.search("Gruenkohl")) == ["Grünkohl roh"]
+    assert names(idx.search("Griess")) == ["Grieß Weizen"]
+    assert names(idx.search("Käse")) == ["Käse Edamer"]
+
+
+def test_adjective_before_noun(tmp_path):
+    idx = mini_index(
+        tmp_path,
+        [
+            ("H725100", "Linse reif"),
+            ("H730000", "Linse rot reif"),
+            ("H730032", "Linse rot, reif, gekocht"),
+            ("X999999", "Rote-Linsensuppe mit Koriander"),
+        ],
+    )
+    assert names(idx.search("rote Linsen"))[:2] == ["Linse rot reif", "Linse rot, reif, gekocht"]
+
+
+def test_plain_food_before_compounds_and_flour(tmp_path):
+    idx = mini_index(
+        tmp_path,
+        [
+            ("W380300", "Kartoffelwurst"),
+            ("K280200", "Kartoffelsticks"),
+            ("K110100", "Kartoffel geschält, roh"),
+            ("C453000", "Reis Mehl"),
+            ("C356000", "Reis Grieß"),
+            ("C352000", "Reis poliert, roh"),
+            ("C559000", "Reisnudeln roh"),
+        ],
+    )
+    assert names(idx.search("Kartoffeln"))[0] == "Kartoffel geschält, roh"
+    assert names(idx.search("Reis"))[0] == "Reis poliert, roh"
+
+
+def test_common_names_map_to_bls_names(tmp_path):
+    idx = mini_index(
+        tmp_path,
+        [
+            ("E401000", "Teigwaren eifrei, roh"),
+            ("E510000", "Vollkornteigwaren eifrei, roh"),
+            ("G312100", "Broccoli roh"),
+            ("C351000", "Reis unpoliert, roh"),
+            ("C352000", "Reis poliert, roh"),
+            ("X720912", "Nudelpudding mit Kochschinken"),
+        ],
+    )
+    assert names(idx.search("Nudeln"))[0] == "Teigwaren eifrei, roh"
+    assert names(idx.search("Vollkornnudeln"))[0] == "Vollkornteigwaren eifrei, roh"
+    assert names(idx.search("Brokkoli"))[0] == "Broccoli roh"
+    assert names(idx.search("Vollkornreis")) == ["Reis unpoliert, roh"]
