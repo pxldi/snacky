@@ -20,8 +20,9 @@ Snacky is one Python process that owns one SQLite file.
 | `snacky.sources.off` | Open Food Facts client |
 | `snacky.sources.tandoor` | Tandoor client: recipe nutrition, food properties |
 | `snacky.sources.opengym` | openGym client: workouts, body weight |
-| `snacky.lookup` | the lookup order below (later) |
-| `snacky.mcp_server` | MCP tools (later) |
+| `snacky.lookup` | the lookup order below: search, resolve a ref, resolve a barcode |
+| `snacky.mcp_server` | the MCP tools and the `/health` route; `create_mcp` builds the server, `create_mcp_app` its stateless HTTP app |
+| `snacky.__main__` | wires the clients and serves MCP and the web UI as two uvicorn servers in one loop |
 | `snacky.web` | web UI (later) |
 
 ## Lookup order
@@ -33,6 +34,29 @@ Snacky is one Python process that owns one SQLite file.
 
 The assistant names foods and grams. It supplies nutrient numbers only when
 reading a label (`source = label`) or when nothing above knows the food.
+
+A search result carries a `ref` (`food:<id>`, `bls:<code>` or `off:<barcode>`).
+`log_food` and `add_serving` take a ref and store the food on first use, so it
+is found locally from then on. A BLS or Open Food Facts hit that is already
+stored is listed once, as the stored food. When Open Food Facts is down, a
+search returns the local results and a note.
+
+A barcode is looked up in stored foods (a label reading first, then a cached
+product) before Open Food Facts.
+
+## MCP tools
+
+`search_food`, `log_food`, `log_barcode`, `log_label`, `log_recipe_portion`,
+`log_estimate`, `day_summary`, `week_summary`, `update_entry`, `delete_entry`,
+`set_goal`, `add_serving`. Every logging result names the food's source.
+
+`log_estimate` looks each plate item up by its `search_name` in stored foods
+and BLS first and uses the model's numbers only when nothing matches. It never
+calls Open Food Facts. The deployment puts this tool behind an approval step.
+
+`eaten_at` is an ISO datetime, `HH:MM` or empty (now). A bare time means the
+latest such time that is not in the future, so "23:30" said at 00:20 is the
+evening before. A time more than 15 minutes ahead is refused.
 
 ## Entries
 
