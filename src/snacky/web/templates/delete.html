@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Löschen · Snacky{% endblock %}
+{% block content %}
+<h1>Eintrag löschen?</h1>
+<p>{{ entry.name }}{% if entry.grams %}, {{ entry.grams|amount }} g{% endif %},
+  {{ entry.nutrients.protein_g|num(1) }} g Protein, {{ entry.nutrients.kcal|num }} kcal,
+  {{ clock(entry.eaten_at) }} Uhr.</p>
+<form class="stack" method="post" action="/entries/{{ entry.id }}/delete">
+  <input type="hidden" name="next" value="/?day={{ entry.eaten_at.date().isoformat() }}">
+  <button type="submit" class="btn danger">Ja, löschen</button>
+  <a class="btn" href="/entries/{{ entry.id }}">Abbrechen</a>
+</form>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Schnellwahl · Snacky{% endblock %}
+{% block content %}
+<h1>Schnellwahl</h1>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+
+<section aria-labelledby="list-h">
+  <h2 id="list-h">Deine Schnellwahl</h2>
+  {% if not items %}
+  <p class="empty">Noch keine Schnellwahl. Suche unten ein Lebensmittel und lege es an.</p>
+  {% endif %}
+  <ul class="entries">
+    {% for i in items %}
+    <li class="qrow">
+      <span class="e-main">
+        <span class="e-name">{{ i.item.label }}</span>
+        <span class="e-meta">{{ i.food.name }} · {{ i.item.grams|amount }} g</span>
+      </span>
+      <span class="e-nums">
+        <span class="e-p">{{ i.nutrients.protein_g|num(1) }} g</span>
+        <span class="e-k">{{ i.nutrients.kcal|num }} kcal</span>
+      </span>
+      <form method="post" action="/quick/{{ i.item.id }}/remove">
+        <button type="submit" class="btn" aria-label="{{ i.item.label }} entfernen">Entfernen</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section aria-labelledby="add-h">
+  <h2 id="add-h">Neu anlegen</h2>
+  <form class="search" method="get" action="/quick">
+    <label>Lebensmittel suchen
+      <input type="search" name="q" value="{{ query }}" autocomplete="off">
+    </label>
+    <button type="submit" class="btn">Suchen</button>
+  </form>
+  {% if query and not results %}
+  <p class="empty">Nichts gefunden. Es werden nur Lebensmittel gefunden, die schon einmal eingetragen wurden. Lass den Bot das Lebensmittel zuerst eintragen.</p>
+  {% endif %}
+  {% for food in results %}
+  <form class="stack card" method="post" action="/quick">
+    <input type="hidden" name="food_id" value="{{ food.id }}">
+    <p class="e-name">{{ food.name }}{% if food.brand %} <span class="e-meta">({{ food.brand }})</span>{% endif %}</p>
+    <p class="e-meta">Pro 100 g: {{ food.per_100g.protein_g|num(1) }} g Protein, {{ food.per_100g.kcal|num }} kcal</p>
+    <div class="pair">
+      <label>Menge in Gramm
+        <input name="grams" inputmode="decimal" autocomplete="off" required
+               value="{{ (food.servings[0].grams if food.servings else 100)|input_number }}">
+      </label>
+      <label>Beschriftung
+        <input name="label" maxlength="60" value="{{ food.name[:60] }}">
+      </label>
+    </div>
+    <button type="submit" class="btn primary">Zur Schnellwahl</button>
+  </form>
+  {% endfor %}
+</section>
+{% endblock %}
