@@ -56,8 +56,12 @@ Ranking
 -------
 X and Y foods are dishes. Codes are not enough on their own ("Hafer Flocken,
 gekocht" is a C food), so search sorts by, in order: dish or not, whether the
-query starts the name, then name length. A shorter name is a plainer food:
-"Tofu" (4 characters) beats "Tofu gebacken", and "Linse reif" beats "Linsensprossen".
+name opens with the queried word ("Kartoffel geschält, roh" before
+"Kartoffelwurst"), whether it is a flour, starch or similar derivative, then
+name length. A shorter name is a plainer food: "Tofu" (4 characters) beats
+"Tofu gebacken". Queries also match ae/oe/ue/ss for ä/ö/ü/ß, an adjective before
+the noun ("rote Linsen" finds "Linse rot reif") and a few common names BLS
+spells differently (Nudeln, Brokkoli, Vollkornreis).
 """
 
 from __future__ import annotations
@@ -224,28 +228,85 @@ def build(source: Path, out: Path) -> int:
     return count
 
 
-def _stem(word: str) -> str:
+def _stems(word: str) -> set[str]:
     """Drop a German plural or case ending so "Linsen" also finds "Linse reif"."""
-    for suffix in ("en", "n", "e", "s"):
-        if word.endswith(suffix) and len(word) - len(suffix) >= 4:
-            return word[: -len(suffix)]
-    return word
+    return {
+        word[: -len(suffix)]
+        for suffix in ("en", "n", "e", "s")
+        if word.endswith(suffix) and len(word) - len(suffix) >= 4
+    }
 
 
-def _match_expr(query: str) -> tuple[str, list[str]] | None:
-    """An FTS5 expression for the query and the folded spellings a name may start with."""
-    tokens = [_fold(t) for t in _WORD.findall(query)]
+def _adjective_stems(word: str) -> set[str]:
+    """ "rote" -> "rot". Only for words before the last one, which are adjectives
+    in BLS names like "Linse rot reif"."""
+    return {
+        word[: -len(suffix)]
+        for suffix in ("en", "er", "em", "es", "e")
+        if word.endswith(suffix) and len(word) - len(suffix) >= 3
+    }
+
+
+def _spellings(word: str) -> set[str]:
+    """People type ae, oe, ue and ss where BLS has ä, ö, ü and ß. The index drops
+    the umlaut dots but keeps ß, so the plain vowel and ß are what to look for."""
+    plain = word.replace("ae", "a").replace("oe", "o").replace("ue", "u")
+    return {word, plain, word.replace("ss", "ß"), plain.replace("ss", "ß")}
+
+
+# BLS says Teigwaren and Broccoli where people say Nudeln and Brokkoli. Keys and
+# values are folded.
+_SYNONYMS = {
+    "nudel": "teigwaren",
+    "nudeln": "teigwaren",
+    "vollkornnudel": "vollkornteigwaren",
+    "vollkornnudeln": "vollkornteigwaren",
+    "vollkornreis": "reis unpoliert",
+    "brokkoli": "broccoli",
+}
+
+# A flour or a starch is not what "Reis" or "Hafer" means, even when it is named first.
+_PROCESSED = {
+    "mehl",
+    "starke",
+    "kleie",
+    "grieß",
+    "schrot",
+    "grutze",
+    "saft",
+    "nektar",
+    "sirup",
+    "drink",
+    "ol",
+}
+
+
+def _match_expr(query: str) -> tuple[str, set[str]] | None:
+    """An FTS5 expression for the query and the folded words a plain food's name
+    may start with."""
+    tokens: list[str] = []
+    for word in _WORD.findall(query):
+        tokens.extend(_SYNONYMS.get(_fold(word), _fold(word)).split())
     if not tokens:
         return None
     parts = []
-    for token in tokens:
-        options = {f'"{token}"*', f'"{_stem(token)}"*'}
+    heads: set[str] = set()
+    for n, token in enumerate(tokens):
+        forms = _spellings(token)
+        terms = set(forms)
+        for form in forms:
+            terms |= _stems(form)
+            if n < len(tokens) - 1:
+                terms |= _adjective_stems(form)
+        heads |= forms | {stem for form in forms for stem in _stems(form)}
+        options = {f'"{term}"*' for term in terms}
         # BLS writes "Hafer Flocken" where people write "Haferflocken".
-        for i in range(4, len(token) - 3):
-            options.add(f'("{token[:i]}"* AND "{token[i:]}"*)')
+        for form in forms:
+            for i in range(4, len(form) - 3):
+                options.add(f'("{form[:i]}"* AND "{form[i:]}"*)')
         parts.append("(" + " OR ".join(sorted(options)) + ")")
-    starts = {"".join(tokens), "".join(_stem(t) for t in tokens)}
-    return " AND ".join(parts), sorted(starts)
+    heads |= {"".join(tokens)}
+    return " AND ".join(parts), heads
 
 
 def _candidate(row: sqlite3.Row) -> FoodCandidate:
@@ -280,7 +341,7 @@ class BlsIndex:
         expr = _match_expr(query)
         if expr is None or limit <= 0:
             return []
-        match, starts = expr
+        match, heads = expr
         try:
             rows = self._con.execute(
                 "SELECT f.* FROM foods_fts JOIN foods f ON f.code = foods_fts.code WHERE foods_fts MATCH ?",
@@ -289,13 +350,21 @@ class BlsIndex:
         except sqlite3.OperationalError:
             return []
 
-        def rank(row: sqlite3.Row) -> tuple[int, int, int, str]:
-            folded = _fold(row["name"])
-            joined = re.sub(r"\W+", "", folded)
-            leads = any(joined.startswith(s) for s in starts)
+        def rank(row: sqlite3.Row) -> tuple[bool, int, bool, int, str]:
+            words = _WORD.findall(_fold(row["name"]))
+            # Tier 0: the name opens with the queried word, as in "Linse rot reif"
+            # for "Linsen" or "Hafer Flocken" for "Haferflocken". Tier 1: it only
+            # starts with those letters, like "Linsenmehl". Tier 2: it merely contains them.
+            if any("".join(words[:k]) in heads for k in range(1, min(len(words), 3) + 1)):
+                tier = 0
+            elif any("".join(words).startswith(h) for h in heads):
+                tier = 1
+            else:
+                tier = 2
             return (
                 row["code"][0] in _DISH_GROUPS,
-                not leads,
+                tier,
+                tier == 0 and any(w in _PROCESSED for w in words[1:]),
                 len(row["name"]),
                 row["code"],
             )
