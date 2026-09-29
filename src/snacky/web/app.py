@@ -35,6 +35,14 @@ from snacky.web import format as fmt
 
 _HERE = Path(__file__).parent
 _OPENGYM_TIMEOUT_S = 5
+# How long after logging from the web UI the undo button still works. Later
+# on, a stale link or a second tab could delete an entry the user meant to keep.
+_UNDO_WINDOW = timedelta(seconds=120)
+_UNDO_STALE = (
+    "Rückgängig geht nur kurz nach dem Eintragen in der Weboberfläche. "
+    "Lösche den Eintrag sonst über die Bearbeitung."
+)
+
 
 # Nothing loads from outside this origin and nothing runs inline, so the
 # policy can be this strict.
@@ -184,6 +192,21 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
     def is_api(request: Request) -> bool:
         return request.url.path.startswith("/api/")
 
+    def undoable(entry: Any) -> bool:
+        age = _now() - entry.eaten_at
+        return entry.origin is Origin.UI and timedelta(0) <= age < _UNDO_WINDOW
+
+    def undo_entry(request: Request) -> Any:
+        """The entry `?undo=` names, when it may still be undone; else None."""
+        undo_id = request.query_params.get("undo", "")
+        if not (undo_id.isascii() and undo_id.isdigit()):
+            return None
+        try:
+            entry = store.get_entry(int(undo_id))
+        except NotFound:
+            return None
+        return entry if undoable(entry) else None
+
     # Pages
 
     async def day_page(request: Request) -> Response:
@@ -204,13 +227,7 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
             for item in store.quick_items():
                 food = store.get_food(item.food_id)
                 quick.append({"item": item, "nutrients": food.per_100g.for_grams(item.grams)})
-        undo = None
-        undo_id = request.query_params.get("undo", "")
-        if undo_id.isdigit():
-            try:
-                undo = store.get_entry(int(undo_id))
-            except NotFound:
-                undo = None
+        undo = undo_entry(request)
         return render(
             request,
             "day.html",
@@ -327,7 +344,16 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
             food = store.get_food(item.food_id)
             items.append({"item": item, "food": food, "nutrients": food.per_100g.for_grams(item.grams)})
         results = store.search_foods(query, limit=8) if query else []
-        return render(request, "quick.html", status, items=items, query=query, results=results, error=error)
+        return render(
+            request,
+            "quick.html",
+            status,
+            items=items,
+            query=query,
+            results=results,
+            error=error,
+            undo=undo_entry(request),
+        )
 
     async def quick_page(request: Request) -> Response:
         return quick_page_response(request)
@@ -364,8 +390,19 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
         )
 
     async def quick_log(request: Request) -> Response:
+        form = await _form(request)
         entry = _log_quick(request.path_params["item_id"])
-        return RedirectResponse(f"/?undo={entry.id}", status_code=303)
+        # Only the two pages that show the undo notice may be returned to.
+        back = form.get("next") if form.get("next") in ("/", "/quick") else "/"
+        return RedirectResponse(f"{back}?undo={entry.id}", status_code=303)
+
+    async def entry_undo(request: Request) -> Response:
+        entry = store.get_entry(request.path_params["entry_id"])
+        if not undoable(entry):
+            raise HTTPException(409, _UNDO_STALE)
+        form = await _form(request)
+        store.delete_entry(entry.id)
+        return RedirectResponse(_safe_next(form.get("next"), "/"), status_code=303)
 
     # JSON API
 
@@ -464,7 +501,7 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
         Route("/entries/{entry_id:int}", entry_update, methods=["POST"]),
         Route("/entries/{entry_id:int}/delete", entry_delete_page),
         Route("/entries/{entry_id:int}/delete", entry_delete, methods=["POST"]),
-        Route("/entries/{entry_id:int}/undo", entry_delete, methods=["POST"]),
+        Route("/entries/{entry_id:int}/undo", entry_undo, methods=["POST"]),
         Route("/quick", quick_page),
         Route("/quick", quick_add, methods=["POST"]),
         Route("/quick/{item_id:int}/remove", quick_remove, methods=["POST"]),
