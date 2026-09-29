@@ -1,47 +1,66 @@
 {% extends "base.html" %}
 {% block title %}{{ entry.name }} · Snacky{% endblock %}
 {% block content %}
-<p><a href="{{ back }}">Zurück zum Tag</a></p>
-<h1>{{ entry.name }}</h1>
+{% set est = is_estimate(entry.source, entry.confidence) %}
+<div class="page">
+  <h1 class="page-title">{{ entry.name }}</h1>
+  <section class="panel" aria-labelledby="facts-h">
+    <h2 id="facts-h">Nährwerte</h2>
+    <p class="panel-sub">{% if amount_label(entry) %}für {{ amount_label(entry) }}, {% endif %}{{ date_short(entry.eaten_at.date()) }} um {{ clock(entry.eaten_at) }}&nbsp;Uhr</p>
+    {% set n = entry.nutrients %}
+    <table class="nutri">
+      {% if per_100g %}
+      <thead>
+        <tr><th scope="col"><span class="sr">Nährwert</span></th><th scope="col">je 100&nbsp;g</th><th scope="col">diese Portion</th></tr>
+      </thead>
+      {% endif %}
+      <tbody>
+        <tr><th scope="row">Energie</th>{% if per_100g %}<td>{{ per_100g.kcal|num }}&nbsp;kcal</td>{% endif %}<td>{{ n.kcal|num }}&nbsp;kcal</td></tr>
+        <tr><th scope="row">Fett</th>{% if per_100g %}<td>{{ per_100g.fat_g|num(1) }}&nbsp;g</td>{% endif %}<td>{{ n.fat_g|num(1) }}&nbsp;g</td></tr>
+        <tr><th scope="row">Kohlenhydrate</th>{% if per_100g %}<td>{{ per_100g.carbs_g|num(1) }}&nbsp;g</td>{% endif %}<td>{{ n.carbs_g|num(1) }}&nbsp;g</td></tr>
+        <tr><th scope="row">Ballaststoffe</th>{% if per_100g %}<td>{{ value_label(per_100g.fibre_g, "g", 1) }}</td>{% endif %}<td>{{ value_label(n.fibre_g, "g", 1) }}</td></tr>
+        <tr class="nutri-protein"><th scope="row">Eiweiß</th>{% if per_100g %}<td>{{ per_100g.protein_g|num(1) }}&nbsp;g</td>{% endif %}<td class="{{ 'est' if est }}">{{ protein_label(entry) }}</td></tr>
+      </tbody>
+    </table>
+    <dl class="facts">
+      <div><dt>Quelle</dt><dd>{{ SOURCE_LABELS[entry.source] }}</dd></div>
+      <div><dt>Eingetragen über</dt><dd>{{ ORIGIN_LABELS[entry.origin] }}</dd></div>
+      {% if entry.confidence %}<div><dt>Sicherheit</dt><dd>{{ CONFIDENCE_LABELS[entry.confidence] }}</dd></div>{% endif %}
+    </dl>
+    {% if est %}
+    <p class="panel-fine"><strong>Schätzung:</strong> Die Werte sind nicht aus einer Datenbank.</p>
+    {% endif %}
+    {% if entry.assumptions %}
+    <p class="panel-fine"><strong>Annahmen:</strong> {{ entry.assumptions }}</p>
+    {% endif %}
+  </section>
 
-<dl class="facts">
-  <div><dt>Protein</dt><dd>{{ entry.nutrients.protein_g|num(1) }} g</dd></div>
-  <div><dt>Energie</dt><dd>{{ entry.nutrients.kcal|num }} kcal</dd></div>
-  <div><dt>Fett</dt><dd>{{ entry.nutrients.fat_g|num(1) }} g</dd></div>
-  <div><dt>Kohlenhydrate</dt><dd>{{ entry.nutrients.carbs_g|num(1) }} g</dd></div>
-  <div><dt>Ballaststoffe</dt><dd>{{ value_label(entry.nutrients.fibre_g, "g", 1) }}</dd></div>
-  <div><dt>Quelle</dt><dd>{{ SOURCE_LABELS[entry.source] }}</dd></div>
-  <div><dt>Eingetragen über</dt><dd>{{ ORIGIN_LABELS[entry.origin] }}</dd></div>
-  {% if entry.confidence %}<div><dt>Sicherheit</dt><dd>{{ CONFIDENCE_LABELS[entry.confidence] }}</dd></div>{% endif %}
-</dl>
-{% if is_estimate(entry.source, entry.confidence) %}
-<p class="hint"><span class="tag est">Schätzung</span> Die Werte sind nicht aus einer Datenbank.</p>
-{% endif %}
-{% if entry.assumptions %}
-<p class="hint">Annahmen: {{ entry.assumptions }}</p>
-{% endif %}
-
-{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
-<form class="stack" method="post" action="/entries/{{ entry.id }}">
-  <input type="hidden" name="back" value="{{ back }}">
-  {% if entry.grams or entry.servings %}
-  <label>
-    {% if entry.grams %}Menge in Gramm{% else %}Portionen{% endif %}
-    <input name="amount" inputmode="decimal" autocomplete="off" required
-           value="{{ form.amount if form else (entry.grams or entry.servings)|input_number }}">
-  </label>
-  {% else %}
-  <p class="hint">Dieser Eintrag hat keine Menge, die sich ändern lässt.</p>
-  {% endif %}
-  <div class="pair">
-    <label>Tag
-      <input type="date" name="day" required value="{{ form.day if form else entry.eaten_at.date().isoformat() }}">
-    </label>
-    <label>Uhrzeit
-      <input type="time" name="time" required value="{{ form.time if form else clock(entry.eaten_at) }}">
-    </label>
-  </div>
-  <button type="submit" class="btn primary">Speichern</button>
-</form>
-<p><a class="btn danger-link" href="/entries/{{ entry.id }}/delete">Löschen</a></p>
+  <section class="panel" aria-labelledby="edit-h">
+    <h2 id="edit-h">Eintrag ändern</h2>
+    {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+    <form class="stack tbl" method="post" action="/entries/{{ entry.id }}">
+      <input type="hidden" name="back" value="{{ back }}">
+      {% if entry.grams or entry.servings %}
+      <label>
+        {% if entry.grams %}Menge in Gramm{% else %}Portionen{% endif %}
+        <input name="amount" inputmode="decimal" autocomplete="off" required
+               value="{{ form.amount if form else (entry.grams or entry.servings)|input_number }}">
+      </label>
+      {% else %}
+      <p class="panel-fine">Dieser Eintrag hat keine Menge, die sich ändern lässt.</p>
+      {% endif %}
+      <div class="pair">
+        <label>Tag
+          <input type="date" name="day" required value="{{ form.day if form else entry.eaten_at.date().isoformat() }}">
+        </label>
+        <label>Uhrzeit
+          <input type="time" name="time" required value="{{ form.time if form else clock(entry.eaten_at) }}">
+        </label>
+      </div>
+      <button type="submit" class="btn btn-primary">Speichern</button>
+      <a class="btn" href="{{ back }}">Zurück zum Tag</a>
+    </form>
+    <p class="apart"><a class="btn btn-danger" href="/entries/{{ entry.id }}/delete">Löschen</a></p>
+  </section>
+</div>
 {% endblock %}

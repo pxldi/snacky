@@ -1,13 +1,20 @@
 {% extends "base.html" %}
 {% block title %}Löschen · Snacky{% endblock %}
 {% block content %}
-<h1>Eintrag löschen?</h1>
-<p>{{ entry.name }}{% if entry.grams %}, {{ entry.grams|amount }} g{% endif %},
-  {{ entry.nutrients.protein_g|num(1) }} g Protein, {{ entry.nutrients.kcal|num }} kcal,
-  {{ clock(entry.eaten_at) }} Uhr.</p>
-<form class="stack" method="post" action="/entries/{{ entry.id }}/delete">
-  <input type="hidden" name="next" value="/?day={{ entry.eaten_at.date().isoformat() }}">
-  <button type="submit" class="btn danger">Ja, löschen</button>
-  <a class="btn" href="/entries/{{ entry.id }}">Abbrechen</a>
-</form>
+<div class="page">
+  <h1 class="page-title">Eintrag löschen?</h1>
+  <section class="panel" aria-label="Dieser Eintrag">
+    <div class="tbl">
+      <p class="del-name">{{ entry.name }}{% if amount_label(entry) %}, {{ amount_label(entry) }}{% endif %}</p>
+      <p class="del-facts">{{ protein_label(entry) }} Eiweiß · {{ entry.nutrients.kcal|num }}&nbsp;kcal · {{ clock(entry.eaten_at) }}&nbsp;Uhr</p>
+    </div>
+    <div class="actions">
+      <a class="btn btn-primary" href="/entries/{{ entry.id }}">Abbrechen</a>
+      <form method="post" action="/entries/{{ entry.id }}/delete">
+        <input type="hidden" name="next" value="/?day={{ entry.eaten_at.date().isoformat() }}">
+        <button type="submit" class="btn btn-danger">Ja, löschen</button>
+      </form>
+    </div>
+  </section>
+</div>
 {% endblock %}

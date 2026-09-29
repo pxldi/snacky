@@ -2,28 +2,33 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#D6247A" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#2B0819" media="(prefers-color-scheme: dark)">
   <title>{% block title %}Snacky{% endblock %}</title>
+  <link rel="stylesheet" href="/static/fonts.css">
   <link rel="stylesheet" href="/static/app.css">
   <script src="/static/app.js" defer></script>
 </head>
 <body>
+  <a class="skip" href="#main">Zum Inhalt</a>
+{% import "_parts.html" as p %}
   <header class="site">
-   <div class="bar">
-    <span class="brand">Snacky</span>
-    <nav aria-label="Hauptmenü">
-      <a href="/"{% if nav_current == "day" %} aria-current="page"{% endif %}>Heute</a>
-      <a href="/week"{% if nav_current == "week" %} aria-current="page"{% endif %}>Woche</a>
-      <a href="/quick"{% if nav_current == "quick" %} aria-current="page"{% endif %}>Schnell</a>
-    </nav>
-   </div>
+    <div class="site-inner">
+      <a class="brand" href="/">Snacky</a>
+      {% block strip %}{% endblock %}
+      <nav class="mainnav" aria-label="Hauptmenü">
+        <a href="/"{% if nav_current == "day" %} aria-current="page"{% endif %}>{{ p.nav_today() }}<span>Heute</span></a>
+        <a href="/week"{% if nav_current == "week" %} aria-current="page"{% endif %}>{{ p.nav_week() }}<span>Woche</span></a>
+        <a href="/quick"{% if nav_current == "quick" %} aria-current="page"{% endif %}>{{ p.nav_quick() }}<span>Schnell</span></a>
+      </nav>
+    </div>
   </header>
-  <main>
+  {% block notice %}{% endblock %}
+  <main id="main">
     {% block content %}{% endblock %}
   </main>
-  <footer class="site">
-    <p>Nährwerte aus Bundeslebensmittelschlüssel 4.0, Max Rubner-Institut, CC BY 4.0, und Open Food Facts, ODbL.</p>
-  </footer>
+  {% block fine %}{% endblock %}
 </body>
 </html>

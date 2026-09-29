@@ -121,7 +121,7 @@ def test_health(client):
 def test_pages_render_empty(client):
     day = client.get("/")
     assert day.status_code == 200
-    assert "Noch nichts eingetragen. Schreib dem Bot, was du gegessen hast." in day.text
+    assert "Noch nichts drin. Schreib Clanky, was du gegessen hast." in day.text
     assert "Kein Proteinziel gesetzt." in day.text
     assert "Noch keine Schnellwahl" in day.text
     week = client.get("/week")
@@ -136,15 +136,15 @@ def test_day_page_with_data(client, seeded):
     page = client.get("/").text
     assert "Bundeslebensmittelschlüssel 4.0, Max Rubner-Institut, CC BY 4.0" in page
     assert "Open Food Facts, ODbL" in page
-    assert re.search(r'class="big">52<', page)  # 27.5 + 24 = 51.5 g protein
-    assert "mindestens 120 g" in page
-    assert "Noch 69 g" in page
+    assert re.search(r'class="claim-num">52<', page)  # 27.5 + 24 = 51.5 g protein
+    assert "Ziel</span> 120&nbsp;g" in page
+    assert "Noch 69 g" in page  # the gap, next to the total
     assert "2.200–2.600" in page
-    assert "Tofu natur" in page and "250 g" in page and "Open Food Facts" in page
+    assert "Tofu natur" in page and "250\u00a0g" in page and "Open Food Facts" in page
     assert "Pasta im Restaurant" in page
-    assert "Schätzung (niedrig)" in page
-    assert "% der Kalorien sind geschätzt" in page
-    assert "erreicht" not in page and "unter " not in page  # no per-meal target without the env var
+    assert "geschätzt, unsicher" in page and "≈ 24\u00a0g" in page
+    assert "davon ≈&nbsp;47&nbsp;% des Proteins geschätzt" in page  # 24 of 51.5 g protein
+    assert "erreicht" not in page and "unter&nbsp;" not in page  # no per-meal target without the env var
 
 
 def test_estimate_marker_for_medium_confidence(client, store):
@@ -157,7 +157,7 @@ def test_estimate_marker_for_medium_confidence(client, store):
         grams=100,
         confidence=Confidence.MEDIUM,
     )
-    assert "Schätzung (mittel)" in client.get("/").text
+    assert "geschätzt, eher sicher" in client.get("/").text
 
 
 def test_no_estimate_marker_for_high_confidence(client, store):
@@ -170,26 +170,26 @@ def test_no_estimate_marker_for_high_confidence(client, store):
         grams=100,
         confidence=Confidence.HIGH,
     )
-    assert "Schätzung" not in client.get("/").text
+    assert "geschätzt" not in client.get("/").text
 
 
 def test_meal_protein_target(client, seeded, monkeypatch):
     monkeypatch.setenv("SNACKY_MEAL_PROTEIN_MIN", "25")
     page = client.get("/").text
-    assert "Ziel 25 g erreicht" in page  # 27.5 g breakfast
-    assert "unter 25 g" in page  # 24 g lunch
+    assert "ab&nbsp;25&nbsp;g" in page  # 27.5 g breakfast
+    assert "unter&nbsp;25&nbsp;g" in page  # 24 g lunch
 
 
 def test_invalid_meal_target_is_ignored(client, seeded, monkeypatch):
     monkeypatch.setenv("SNACKY_MEAL_PROTEIN_MIN", "lots")
-    assert "unter " not in client.get("/").text
+    assert "unter&nbsp;" not in client.get("/").text
 
 
 def test_day_navigation(client, seeded):
     page = client.get("/?day=2026-09-28").text
     assert "/?day=2026-09-27" in page and "/?day=2026-09-29" in page
-    assert "Noch nichts eingetragen" in page
-    assert 'id="quick-h"' not in page  # quick buttons log "now", so only on today
+    assert "An diesem Tag wurde nichts eingetragen." in page
+    assert 'aria-label="Schnell eintragen"' not in page  # quick buttons log "now", so only on today
     assert client.get("/?day=nonsense").status_code == 400
 
 
@@ -240,6 +240,7 @@ def test_edit_page_shows_details(client, seeded):
     assert "Pasta im Restaurant" in page
     assert "Eine normale Portion." in page
     assert 'name="amount"' in page and "Portionen" in page
+    assert "Schätzung:" in page  # the one-line explanation
 
 
 def test_update_grams_and_time(writer, store, seeded):
@@ -342,7 +343,8 @@ def test_quick_log_and_undo(writer, store, food):
 def test_quick_buttons_on_today(client, store, food):
     store.add_quick_item(food.id, 250, "Tofu")
     page = client.get("/").text
-    assert "28 g" in page and "/quick/1/log" in page
+    assert "+27,5&nbsp;g" in page and "/quick/1/log" in page
+    assert 'aria-label="Tofu, 250 g, +27,5 g Protein, eintragen"' in page
 
 
 def test_quick_log_unknown_item(writer):
@@ -396,8 +398,8 @@ def test_week_view_without_opengym(client, seeded):
     page = client.get("/week").text
     assert "28.9. bis 4.10.2026" in page
     assert "Training" not in page and "openGym" not in page
-    assert "Di, 29.9." in page and "52 g" in page and "1.075 kcal" in page
-    assert 'class="goal"' in page  # the goal line
+    assert "Di, 29.9." in page and "52&nbsp;g" in page and "1.075&nbsp;kcal" in page
+    assert 'class="tick"' in page  # the goal tick
     assert "/week?start=2026-09-21" in page
     assert "Im Schnitt 52 g Protein" in page
 
@@ -411,7 +413,7 @@ def test_week_view_with_start(client, seeded):
 def test_week_view_marks_training_days(store, seeded):
     gym = FakeGym([Workout(date(2026, 9, 29), "Session A", 50), Workout(date(2026, 10, 12), "Session B")])
     page = TestClient(create_app(store, opengym=gym)).get("/week").text
-    assert page.count("Training: Session A") == 1
+    assert page.count('class="tag-train"') == 1 and "Session A" in page
     assert "openGym" not in page
     assert gym.calls == [(date(2026, 9, 28), date(2026, 10, 5))]
 
@@ -422,7 +424,7 @@ def test_week_view_survives_opengym_failure(store, seeded, error):
     response = client.get("/week")
     assert response.status_code == 200
     assert "Trainingstage konnten nicht von openGym geladen werden" in response.text
-    assert "Training:" not in response.text and "52 g" in response.text
+    assert 'class="tag-train"' not in response.text and "52&nbsp;g" in response.text
 
 
 def test_week_view_survives_opengym_timeout(store, seeded, monkeypatch):

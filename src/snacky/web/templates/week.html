@@ -1,49 +1,81 @@
 {% extends "base.html" %}
 {% block title %}Woche · Snacky{% endblock %}
+{% block strip %}<p class="strip-note">{{ start.day }}.{{ start.month }}. bis {{ end.day }}.{{ end.month }}.{{ end.year }}</p>{% endblock %}
+
 {% block content %}
-<div class="daynav">
-  <a class="btn" href="/week?start={{ prev_start.isoformat() }}" rel="prev">Vorwoche</a>
-  <div class="daytitle">
-    <h1>Woche</h1>
-    <p>{{ start.day }}.{{ start.month }}. bis {{ end.day }}.{{ end.month }}.{{ end.year }}</p>
-  </div>
-  {% if end < today %}
-  <a class="btn" href="/week?start={{ next_start.isoformat() }}" rel="next">Nächste Woche</a>
-  {% else %}
-  <span></span>
-  {% endif %}
-</div>
-
-{% if opengym_failed %}
-<p class="hint">Die Trainingstage konnten nicht von openGym geladen werden.</p>
-{% endif %}
-
-{% if average is none %}
-<p class="empty">Noch nichts eingetragen. Schreib dem Bot, was du gegessen hast.</p>
-{% else %}
-<p class="hint">Im Schnitt {{ average|num }} g Protein an Tagen mit Einträgen.</p>
-{% endif %}
-
-<ol class="week">
-  {% for r in rows %}
-  <li>
-    <a class="week-row" href="/?day={{ r.day.isoformat() }}">
-      <span class="w-day">{{ date_short(r.day) }}</span>
-      <svg class="w-bar" viewBox="0 0 100 10" preserveAspectRatio="none" role="img"
-           aria-label="{{ r.protein|num }} g Protein{% if r.has_goal %}, Ziel {{ r.limit|num }} g{% endif %}">
-        <rect class="track" width="100" height="10"/>
-        <rect class="fill{{ ' met' if r.met }}" width="{{ '%.2f'|format(r.fill) }}" height="10"/>
-        {% if r.goal_x is not none %}
-        <line class="goal" x1="{{ '%.2f'|format(r.goal_x) }}" x2="{{ '%.2f'|format(r.goal_x) }}" y1="0" y2="10"/>
+<div class="split">
+  <div class="pack-col">
+    <section class="front front-week" data-state="{{ 'met' if has_goal and hero.days and hero.fraction >= 1 else 'open' }}" aria-labelledby="claim">
+      {{ p.fill(hero.fraction) }}
+      <h1 class="claim" id="claim">
+        <span class="sr">Woche: </span>
+        {% if average is none %}
+        <span class="claim-word claim-word-lg">{% if started %}Noch nichts eingetragen{% else %}Woche noch nicht angefangen{% endif %}</span>
+        {% elif hero.days == 0 %}
+        <span class="claim-word claim-word-lg">Die Woche läuft</span>
+        {% else %}
+        <span class="claim-num">{{ hero.logged }}<span class="claim-of">von</span>{{ hero.days }}</span>
+        <span class="claim-word">Tagen dabei</span>
         {% endif %}
-      </svg>
-      <span class="w-protein">{{ r.protein|num }} g</span>
-      <span class="w-kcal">{{ r.kcal|num }} kcal
-        {% for w in r.training %}<span class="tag train">Training{% if w.name %}: {{ w.name }}{% endif %}</span>{% endfor %}
-      </span>
-    </a>
-  </li>
-  {% endfor %}
-</ol>
-<p class="legend">Der senkrechte Strich im Balken ist das Proteinziel des Tages.</p>
+      </h1>
+      {% if average is not none and hero.days > 0 and hero.average is not none %}
+      <p class="claim-line">Ø {{ hero.average|num }}{% if hero.goal %} von {{ hero.goal|num }}{% endif %}&nbsp;g Protein</p>
+      {% elif average is not none %}
+      <p class="claim-line">Ø {{ average|num }}&nbsp;g Protein bisher</p>
+      {% endif %}
+      {% if opengym_failed %}
+      <p class="claim-fine">Die Trainingstage konnten nicht von openGym geladen werden.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <section class="panel" aria-labelledby="panel-h">
+    <h2 id="panel-h">Tage der Woche</h2>
+    <p class="panel-sub">{{ start.day }}.{{ start.month }}. bis {{ end.day }}.{{ end.month }}.{{ end.year }}</p>
+    <ol class="rows tbl wk">
+      {% for r in rows %}
+      {% set of_goal = r.has_goal and r.goal %}
+      <li>
+        <a class="wrow wrow-{{ r.state }}" href="/?day={{ r.day.isoformat() }}"
+           aria-label="{{ date_short(r.day) }}{% if r.state == 'today' %}, heute{% endif %}{% if r.state == 'future' %}, noch nicht eingetragen{% elif r.count == 0 %}, nichts eingetragen{% else %}, {{ r.protein|num }}{% if of_goal %} von {{ r.goal|num }}{% endif %} g{% endif %}{% if r.met and r.state in ('met', 'today') %}, geschafft{% endif %}{% for w in r.training %}, Training{% endfor %}">
+          <span class="w-day">{{ date_short(r.day) }}{% if r.state == "today" %} <span class="tag-today">Heute</span>{% endif %}</span>
+          <span class="w-status">
+            {% if r.met and r.state in ("met", "today") %}{{ p.check() }}<span>geschafft</span>
+            {% elif r.state == "empty" or (r.state == "today" and not r.count) %}<span>nichts eingetragen</span>
+            {% endif %}
+          </span>
+          {% if r.state != "future" %}
+          <svg class="w-bar" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <rect class="track" width="100" height="10"/>
+            <rect class="bar" width="{{ '%.2f'|format(r.fill) }}" height="10"/>
+            {% if r.goal_x is not none %}
+            <line class="tick" x1="{{ '%.2f'|format(r.goal_x) }}" x2="{{ '%.2f'|format(r.goal_x) }}" y1="0" y2="10"/>
+            {% endif %}
+          </svg>
+          <span class="w-protein"><span class="w-num">{{ r.protein|num }}</span>{% if of_goal %}<span class="w-of"> von {{ r.goal|num }}</span>{% endif %}&nbsp;g</span>
+          <span class="w-kcal">{{ r.kcal|num }}&nbsp;kcal</span>
+          {% else %}
+          <span class="w-protein">–</span>
+          {% endif %}
+          {% if r.training %}
+          <span class="w-train">{% for w in r.training %}<span class="tag-train">Training</span>{% if w.name %} <span class="w-workout">{{ w.name }}</span>{% endif %}{% endfor %}</span>
+          {% endif %}
+        </a>
+      </li>
+      {% endfor %}
+    </ol>
+    {% if average is not none %}
+    <p class="panel-fine">Im Schnitt {{ average|num }} g Protein an Tagen mit Einträgen.</p>
+    {% endif %}
+    {% if has_goal %}
+    <p class="panel-fine">Der weiße Strich im Balken ist das Proteinziel des Tages.</p>
+    {% endif %}
+  </section>
+</div>
+<nav class="daynav weeknav" aria-label="Woche wechseln">
+  <a class="btn btn-ground" href="/week?start={{ prev_start.isoformat() }}" rel="prev">{{ p.arrow_left() }}Vorwoche</a>
+  {% if end < today %}
+  <a class="btn btn-ground" href="/week?start={{ next_start.isoformat() }}" rel="next">Nächste Woche{{ p.arrow_right() }}</a>
+  {% endif %}
+</nav>
 {% endblock %}

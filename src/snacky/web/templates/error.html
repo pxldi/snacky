@@ -1,7 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Fehler {{ code }} · Snacky{% endblock %}
 {% block content %}
-<h1>Das hat nicht geklappt</h1>
-<p>{{ message }}</p>
-<p><a class="btn" href="/">Zur Übersicht</a></p>
+<div class="page">
+  <h1 class="page-title">Das hat nicht geklappt</h1>
+  <section class="panel" aria-label="Was passiert ist">
+    <div class="tbl">
+      <p class="del-name">{{ message }}</p>
+    </div>
+    <div class="actions">
+      <a class="btn btn-primary" href="/">Zur Übersicht</a>
+    </div>
+  </section>
+</div>
 {% endblock %}
