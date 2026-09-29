@@ -133,6 +133,20 @@ def test_search_index_follows_update_and_delete(store):
     store._db.execute("INSERT INTO foods_fts (foods_fts) VALUES ('integrity-check')")
 
 
+def test_food_by_source_ref(store):
+    oat = store.upsert_food(food("Oat Flakes", ref="1001", source=Source.OFF))
+    store.add_serving(oat.id, Serving("1 Cup", 80))
+    found = store.food_by_source_ref(Source.OFF, "1001")
+    assert found == store.get_food(oat.id)
+    assert found.servings == (Serving("1 Cup", 80),)
+
+
+def test_food_by_source_ref_needs_both_parts(store):
+    store.upsert_food(food("Oat Flakes", ref="1001", source=Source.OFF))
+    assert store.food_by_source_ref(Source.LABEL, "1001") is None
+    assert store.food_by_source_ref(Source.OFF, "1002") is None
+
+
 def test_add_serving(store):
     f = store.upsert_food(food())
     updated = store.add_serving(f.id, Serving("1 scoop", 30))
