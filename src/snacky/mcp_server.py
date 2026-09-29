@@ -10,6 +10,7 @@ import functools
 import inspect
 import os
 import re
+import statistics
 from collections.abc import Callable
 from datetime import date, datetime, time, timedelta
 from typing import Annotated, Any, Literal
@@ -46,6 +47,9 @@ from snacky.store import DuplicateEntry, NotFound, Store
 # An eaten_at this far ahead of the clock is a wrong date, not a future meal.
 _FUTURE_SLACK = timedelta(minutes=15)
 _HHMM = re.compile(r"^\s*(\d{1,2}):(\d{2})\s*$")
+
+# How far back "recently eaten" reaches when suggesting foods.
+_SUGGEST_DAYS = 30
 
 NutrientName = Literal["kcal", "protein_g", "fat_g", "carbs_g", "fibre_g"]
 
@@ -721,6 +725,83 @@ def create_mcp(
             "food": {"ref": f"food:{food.id}", "name": food.name, "source": food.source.value},
             "servings": _servings(food.servings),
         }
+
+    @mcp.tool()
+    @guarded(NotFound, ValueError)
+    async def suggest_foods(
+        protein_g: Annotated[float, Field(gt=0, description="Protein still missing today, in grams.")],
+        kcal_max: Annotated[
+            float | None,
+            Field(gt=0, description="Most kcal one suggested portion may have. Empty means no limit."),
+        ] = None,
+        limit: Annotated[int, Field(ge=1, le=10, description="Most suggestions to return.")] = 3,
+    ) -> dict:
+        """Suggest foods that close a protein gap. Candidates come only from what the user has eaten in
+        the last 30 days and from their quick items, never from a built-in list. Ranked by how often the
+        food was eaten and by protein per kcal. Each suggestion has the usual portion and the share of
+        the gap it closes. With no history the list is empty and the note says so."""
+        since = clock() - timedelta(days=_SUGGEST_DAYS)
+        seen: dict[int, list[float]] = {}
+        for e in store.entries_between(since, clock() + _FUTURE_SLACK):
+            if e.food_id is not None and e.grams:
+                seen.setdefault(e.food_id, []).append(e.grams)
+        quick = {q.food_id: q.grams for q in store.quick_items()}
+        ranked: list[tuple[float, dict[str, Any]]] = []
+        over_limit = 0
+        for food_id in seen.keys() | quick.keys():
+            try:
+                food = store.get_food(food_id)
+            except NotFound:
+                continue
+            times = len(seen.get(food_id, []))
+            if food_id in seen:
+                grams, basis = statistics.median(seen[food_id]), "median of what you logged"
+            elif food_id in quick:
+                grams, basis = quick[food_id], "quick item"
+            n = food.per_100g.for_grams(grams)
+            if n.protein_g <= 0:
+                continue
+            if kcal_max is not None and n.kcal > kcal_max:
+                over_limit += 1
+                continue
+            label = next((sv.label for sv in food.servings if abs(sv.grams - grams) < 1), None)
+            # A quick item counts as one more time eaten, so a pinned food that
+            # was not logged this month still has a chance.
+            weight = times + (1 if food_id in quick else 0)
+            density = n.protein_g / max(n.kcal, 1.0)
+            ranked.append(
+                (
+                    weight * density,
+                    {
+                        "ref": f"food:{food.id}",
+                        "name": food.name,
+                        "source": food.source.value,
+                        "times_eaten": times,
+                        "quick_item": food_id in quick,
+                        "portion_g": _r(grams),
+                        "portion_basis": basis,
+                        "serving": label,
+                        "kcal": _r(n.kcal),
+                        "protein_g": _r(n.protein_g),
+                        "protein_per_100kcal": _r(density * 100),
+                        "closes_gap_pct": round(min(n.protein_g / protein_g, 1.0) * 100),
+                    },
+                )
+            )
+        ranked.sort(key=lambda r: (-r[0], r[1]["name"]))
+        suggestions = [r[1] for r in ranked[:limit]]
+        note = None
+        if not seen and not quick:
+            note = (
+                f"Nothing eaten in the last {_SUGGEST_DAYS} days and no quick items, so there is nothing "
+                "to suggest. Ask the user what they have at home."
+            )
+        elif not suggestions and over_limit:
+            note = (
+                f"Every usual portion has more than {kcal_max:g} kcal. "
+                "Raise kcal_max or suggest a smaller portion."
+            )
+        return {"gap_protein_g": _r(protein_g), "suggestions": suggestions, "note": note}
 
     return mcp
 

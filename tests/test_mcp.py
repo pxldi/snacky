@@ -16,7 +16,7 @@ from starlette.testclient import TestClient
 from snacky import config
 from snacky.lookup import Lookup
 from snacky.mcp_server import create_mcp, create_mcp_app, parse_when
-from snacky.model import Source
+from snacky.model import FoodCandidate, Nutrients, Origin, Serving, Source
 from snacky.sources import opengym as opengym_module
 from snacky.sources.bls import BlsIndex, build
 from snacky.sources.off import OffClient
@@ -124,6 +124,7 @@ async def test_all_tools_are_listed_with_argument_descriptions(mcp):
             "delete_entry",
             "set_goal",
             "add_serving",
+            "suggest_foods",
         ]
     )
     for tool in tools:
@@ -636,3 +637,83 @@ async def test_add_serving_updates_the_same_label(mcp):
 async def test_an_unexpected_off_status_is_a_readable_error(mcp):
     respx.get(f"{OFF}/api/v2/product/4000000000777.json").respond(403)
     await fails(mcp, "log_barcode", "403", barcode="4000000000777", grams=10)
+
+
+# --- suggest_foods -----------------------------------------------------------
+
+
+def stock(store, name, kcal, protein, *, servings=()):
+    return store.upsert_food(
+        FoodCandidate(
+            name=name, source=Source.MANUAL, per_100g=Nutrients(kcal, protein, 1, 5), servings=servings
+        )
+    )
+
+
+def eat(store, food, grams, days_ago=1):
+    return store.log_entry(
+        name=food.name,
+        nutrients=food.per_100g.for_grams(grams),
+        eaten_at=NOW - timedelta(days=days_ago),
+        source=food.source,
+        origin=Origin.CHAT,
+        grams=grams,
+        food_id=food.id,
+    )
+
+
+async def test_suggest_foods_with_no_history_is_empty_and_says_so(mcp):
+    out = await call(mcp, "suggest_foods", protein_g=30)
+    assert out["suggestions"] == []
+    assert "nothing to suggest" in out["note"]
+
+
+async def test_suggest_foods_ranks_by_frequency_and_density_with_usual_portion(mcp, store):
+    tofu = stock(store, "Smoked Tofu", 150, 15, servings=(Serving("1 Block", 200),))
+    lentils = stock(store, "Red Lentils", 350, 25)
+    rice = stock(store, "White Rice", 350, 7)
+    for grams in (180, 200, 220):
+        eat(store, tofu, grams)
+    eat(store, lentils, 60)
+    eat(store, rice, 80)
+    out = await call(mcp, "suggest_foods", protein_g=40)
+    assert [s["name"] for s in out["suggestions"]] == ["Smoked Tofu", "Red Lentils", "White Rice"]
+    top = out["suggestions"][0]
+    assert top["ref"] == f"food:{tofu.id}" and top["times_eaten"] == 3
+    assert top["portion_g"] == 200 and top["serving"] == "1 Block"
+    assert top["kcal"] == 300 and top["protein_g"] == 30
+    assert top["closes_gap_pct"] == 75 and top["protein_per_100kcal"] == 10
+    assert out["note"] is None
+
+
+async def test_suggest_foods_ignores_old_entries_and_caps_the_share_at_100(mcp, store):
+    seitan = stock(store, "Seitan", 120, 25)
+    old = stock(store, "Chickpea Flour", 380, 22)
+    eat(store, seitan, 200)
+    eat(store, old, 100, days_ago=45)
+    out = await call(mcp, "suggest_foods", protein_g=20)
+    assert [s["name"] for s in out["suggestions"]] == ["Seitan"]
+    assert out["suggestions"][0]["closes_gap_pct"] == 100
+
+
+async def test_suggest_foods_uses_quick_items_and_respects_kcal_max(mcp, store):
+    peanuts = stock(store, "Peanut Butter", 600, 25)
+    edamame = stock(store, "Edamame", 120, 12)
+    store.add_quick_item(peanuts.id, 30, "PB spoon")
+    store.add_quick_item(edamame.id, 100, "Edamame cup")
+    out = await call(mcp, "suggest_foods", protein_g=15, kcal_max=150)
+    assert [s["name"] for s in out["suggestions"]] == ["Edamame"]
+    assert out["suggestions"][0]["portion_basis"] == "quick item"
+    assert out["suggestions"][0]["times_eaten"] == 0
+    tight = await call(mcp, "suggest_foods", protein_g=15, kcal_max=50)
+    assert tight["suggestions"] == [] and "kcal_max" in tight["note"]
+
+
+async def test_suggest_foods_respects_limit_and_skips_protein_free_foods(mcp, store):
+    for i in range(4):
+        eat(store, stock(store, f"Bean {i}", 100, 8 + i), 100)
+    eat(store, stock(store, "Sugar", 400, 0), 10)
+    out = await call(mcp, "suggest_foods", protein_g=20, limit=2)
+    assert len(out["suggestions"]) == 2
+    everything = await call(mcp, "suggest_foods", protein_g=20, limit=10)
+    assert "Sugar" not in [s["name"] for s in everything["suggestions"]]
