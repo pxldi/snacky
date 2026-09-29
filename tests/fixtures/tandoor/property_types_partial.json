@@ -1,0 +1,26 @@
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "timestamp": "2026-01-01T00:00:00Z",
+  "results": [
+    {
+      "id": 11,
+      "name": "Kalorien",
+      "unit": "kcal",
+      "description": null,
+      "order": 11,
+      "open_data_slug": null,
+      "fdc_id": 1008
+    },
+    {
+      "id": 12,
+      "name": "Eiweiß",
+      "unit": "g",
+      "description": null,
+      "order": 12,
+      "open_data_slug": null,
+      "fdc_id": 1003
+    }
+  ]
+}

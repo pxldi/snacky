@@ -1,0 +1,24 @@
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "timestamp": "2026-01-01T00:00:00Z",
+  "results": [
+    {
+      "id": 2,
+      "name": "Tasse",
+      "plural_name": null,
+      "description": null,
+      "base_unit": null,
+      "open_data_slug": null
+    },
+    {
+      "id": 1,
+      "name": "g",
+      "plural_name": "g",
+      "description": null,
+      "base_unit": "g",
+      "open_data_slug": null
+    }
+  ]
+}

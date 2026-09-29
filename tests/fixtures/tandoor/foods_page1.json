@@ -1,0 +1,136 @@
+{
+  "count": 3,
+  "next": "http://tandoor.invalid/api/food/?page=2&page_size=200",
+  "previous": null,
+  "timestamp": "2026-01-01T00:00:00Z",
+  "results": [
+    {
+      "id": 101,
+      "name": "Test Oats",
+      "plural_name": null,
+      "description": "",
+      "shopping": "",
+      "recipe": null,
+      "url": "",
+      "properties": [
+        {
+          "id": 1,
+          "property_amount": 370,
+          "property_type": {
+            "id": 11,
+            "name": "Kalorien",
+            "unit": "kcal",
+            "description": null,
+            "order": 11,
+            "open_data_slug": null,
+            "fdc_id": 1008
+          }
+        },
+        {
+          "id": 2,
+          "property_amount": 13.5,
+          "property_type": {
+            "id": 12,
+            "name": "Eiweiß",
+            "unit": "g",
+            "description": null,
+            "order": 12,
+            "open_data_slug": null,
+            "fdc_id": 1003
+          }
+        },
+        {
+          "id": 3,
+          "property_amount": 7,
+          "property_type": {
+            "id": 13,
+            "name": "Fett",
+            "unit": "g",
+            "description": null,
+            "order": 13,
+            "open_data_slug": null,
+            "fdc_id": 1004
+          }
+        },
+        {
+          "id": 4,
+          "property_amount": 59,
+          "property_type": {
+            "id": 14,
+            "name": "Kohlenhydrate",
+            "unit": "g",
+            "description": null,
+            "order": 14,
+            "open_data_slug": null,
+            "fdc_id": 1005
+          }
+        },
+        {
+          "id": 5,
+          "property_amount": 10,
+          "property_type": {
+            "id": 15,
+            "name": "Ballaststoffe",
+            "unit": "g",
+            "description": null,
+            "order": 15,
+            "open_data_slug": null,
+            "fdc_id": 1079
+          }
+        }
+      ],
+      "properties_food_amount": 100,
+      "properties_food_unit": {
+        "id": 1,
+        "name": "g",
+        "plural_name": "g",
+        "description": null,
+        "base_unit": "g",
+        "open_data_slug": null
+      },
+      "fdc_id": null,
+      "supermarket_category": null,
+      "parent": null,
+      "numchild": 0,
+      "numrecipe": 0
+    },
+    {
+      "id": 102,
+      "name": "Test Milk",
+      "plural_name": null,
+      "description": "",
+      "shopping": "",
+      "recipe": null,
+      "url": "",
+      "properties": [
+        {
+          "id": 6,
+          "property_amount": 64,
+          "property_type": {
+            "id": 11,
+            "name": "Kalorien",
+            "unit": "kcal",
+            "description": null,
+            "order": 11,
+            "open_data_slug": null,
+            "fdc_id": 1008
+          }
+        }
+      ],
+      "properties_food_amount": 100,
+      "properties_food_unit": {
+        "id": 1,
+        "name": "g",
+        "plural_name": "g",
+        "description": null,
+        "base_unit": "g",
+        "open_data_slug": null
+      },
+      "fdc_id": null,
+      "supermarket_category": null,
+      "parent": null,
+      "numchild": 0,
+      "numrecipe": 0
+    }
+  ]
+}

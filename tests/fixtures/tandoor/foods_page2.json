@@ -1,0 +1,25 @@
+{
+  "count": 3,
+  "next": null,
+  "previous": null,
+  "timestamp": "2026-01-01T00:00:00Z",
+  "results": [
+    {
+      "id": 103,
+      "name": "Test Lentils",
+      "plural_name": null,
+      "description": "",
+      "shopping": "",
+      "recipe": null,
+      "url": "",
+      "properties": [],
+      "properties_food_amount": 100,
+      "properties_food_unit": null,
+      "fdc_id": null,
+      "supermarket_category": null,
+      "parent": null,
+      "numchild": 0,
+      "numrecipe": 0
+    }
+  ]
+}

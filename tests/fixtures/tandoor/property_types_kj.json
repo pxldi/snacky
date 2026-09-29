@@ -1,0 +1,44 @@
+{
+  "count": 4,
+  "next": null,
+  "previous": null,
+  "timestamp": "2026-01-01T00:00:00Z",
+  "results": [
+    {
+      "id": 41,
+      "name": "Energie",
+      "unit": "kJ",
+      "description": null,
+      "order": 41,
+      "open_data_slug": null,
+      "fdc_id": null
+    },
+    {
+      "id": 42,
+      "name": "Eiweiß",
+      "unit": "g",
+      "description": null,
+      "order": 42,
+      "open_data_slug": null,
+      "fdc_id": null
+    },
+    {
+      "id": 43,
+      "name": "Fett",
+      "unit": "g",
+      "description": null,
+      "order": 43,
+      "open_data_slug": null,
+      "fdc_id": null
+    },
+    {
+      "id": 44,
+      "name": "Kohlenhydrate",
+      "unit": "g",
+      "description": null,
+      "order": 44,
+      "open_data_slug": null,
+      "fdc_id": null
+    }
+  ]
+}
