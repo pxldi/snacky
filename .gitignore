@@ -13,3 +13,9 @@ dist/
 .env
 .claude/settings.local.json
 .worktrees/
+# Impeccable: local-only state
+.impeccable/config.local.json
+.impeccable/review/
+.impeccable/mocks/
+.impeccable/questions/
+.impeccable/live/
