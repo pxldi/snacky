@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  pull_request:
+    branches: ["main"]
+    types: [opened, edited, synchronize, reopened]
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          enable-cache: true
+
+      - run: uv sync --frozen
+      - run: uv run ruff check
+      - run: uv run ruff format --check
+      - run: uv run pytest -q
+
+  # The repo squash-merges, so the pull request title becomes the commit
+  # subject on main, and release notes are generated from those subjects.
+  # A title that is not a Conventional Commit would drop out of them.
+  title:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check the pull request title follows Conventional Commits
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pattern='^(feat|fix|perf|refactor|docs|test|build|ci|chore|style|revert)(\([a-z0-9._/-]+\))?!?: .+'
+          if ! printf '%s\n' "$TITLE" | grep -Eq "$pattern"; then
+            echo "::error::PR title must follow Conventional Commits, e.g. 'feat(store): add goals' (see AGENTS.md)."
+            echo "Got: $TITLE"
+            exit 1
+          fi
