@@ -143,3 +143,20 @@ async def test_aclose_only_closes_owned_client():
     owner = OffClient(UA)
     await owner.aclose()
     assert owner._http.is_closed
+
+
+@respx.mock
+async def test_barcode_that_is_not_digits_is_not_requested(client):
+    route = respx.route()
+    assert await client.by_barcode("../search") is None
+    assert await client.by_barcode("4000 0000") is None
+    assert not route.called
+
+
+@respx.mock
+async def test_stored_ref_is_the_code_off_uses(client):
+    body = fixture("product_full.json")
+    respx.get(f"{BASE}/api/v2/product/04000000000017.json").respond(json=body)
+    food = await client.by_barcode(" 04000000000017 ")
+    assert food is not None
+    assert food.source_ref == body["product"]["code"]

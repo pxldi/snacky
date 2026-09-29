@@ -80,7 +80,9 @@ def _candidate(product: dict, barcode: str | None = None) -> FoodCandidate | Non
         return None
 
     name = (product.get("product_name_de") or "").strip() or (product.get("product_name") or "").strip()
-    ref = barcode or product.get("code")
+    # OFF's own code, so a barcode typed with leading zeros and a search hit for the
+    # same product end up as one stored food.
+    ref = product.get("code") or barcode
     if not name or not ref:
         return None
 
@@ -148,6 +150,9 @@ class OffClient:
 
     async def by_barcode(self, barcode: str) -> FoodCandidate | None:
         """None when the product is unknown or has no per-100 g energy and protein."""
+        barcode = barcode.strip()
+        if not barcode.isdigit():  # also keeps a typed "../" out of the URL path
+            return None
         response = await self._get(f"{self._base}/api/v2/product/{barcode}.json", {"fields": _FIELDS})
         if response.status_code == 404:
             return None

@@ -15,12 +15,15 @@ COPY pyproject.toml uv.lock ./
 # The project itself is not installed: the runtime stage puts src/ on PYTHONPATH.
 RUN uv sync --frozen --no-dev --no-install-project
 
-# BLS stage, not active yet. It turns on once scripts/build_bls.py is on main:
-# it converts the BLS download into the SQLite index that snacky.sources.bls reads.
-#
-# FROM builder AS bls
-# COPY scripts/ ./scripts/
-# RUN uv run --group bls-build python scripts/build_bls.py /out/bls.sqlite
+# Converts the pinned BLS download into the SQLite index that snacky.sources.bls
+# reads. Only the two modules the script imports are copied, so an edit
+# elsewhere in src/ does not download the archive again.
+FROM base AS bls
+WORKDIR /app
+COPY scripts/ ./scripts/
+COPY src/snacky/__init__.py src/snacky/model.py ./src/snacky/
+COPY src/snacky/sources/__init__.py src/snacky/sources/bls.py ./src/snacky/sources/
+RUN PYTHONPATH=/app/src python scripts/build_bls.py /out/bls.sqlite
 
 FROM base AS runtime
 LABEL org.opencontainers.image.source="https://github.com/pxldi/snacky" \
@@ -35,8 +38,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 COPY src/ ./src/
-# When the BLS stage is active, also add:
-# COPY --from=bls /out/bls.sqlite /app/data/bls.sqlite
+COPY --from=bls /out/bls.sqlite /app/data/bls.sqlite
 
 # The commit this image was built from, reported by /health as "build". The
 # homelab's wait-for-mcp compares it to know a rollout finished.
