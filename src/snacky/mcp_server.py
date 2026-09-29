@@ -803,6 +803,49 @@ def create_mcp(
             )
         return {"gap_protein_g": _r(protein_g), "suggestions": suggestions, "note": note}
 
+    @mcp.tool()
+    @guarded(NotFound, ValueError)
+    async def log_again(
+        entry_ids: Annotated[
+            list[int],
+            Field(min_length=1, max_length=30, description="Entry ids from day_summary to copy."),
+        ],
+        eaten_at: Annotated[
+            str | None, Field(description="ISO datetime or HH:MM (local time). Empty means now.")
+        ] = None,
+    ) -> dict:
+        """Log earlier entries again, e.g. 'the same breakfast as yesterday': get the ids from day_summary.
+        Each copy keeps the original's food, grams and nutrients and gets the new time. Nothing is
+        logged if one id does not exist."""
+        when = parse_when(eaten_at, clock())
+        originals = [store.get_entry(i) for i in entry_ids]
+        copies = [
+            store.log_entry(
+                name=e.name,
+                nutrients=e.nutrients,
+                eaten_at=when,
+                source=e.source,
+                origin=Origin.CHAT,
+                grams=e.grams,
+                servings=e.servings,
+                food_id=e.food_id,
+                confidence=e.confidence,
+                assumptions=e.assumptions,
+                # origin_ref is unique and names one cook log, so a copy has none.
+            )
+            for e in originals
+        ]
+        day = store.day_summary(when.date())
+        return {
+            "logged": len(copies),
+            "entries": [_entry_dict(e) for e in copies],
+            "day_so_far": {
+                "date": day.day.isoformat(),
+                "kcal": _r(day.totals.kcal),
+                "protein_g": _r(day.totals.protein_g),
+            },
+        }
+
     return mcp
 
 

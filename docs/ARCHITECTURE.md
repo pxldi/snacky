@@ -48,7 +48,7 @@ product) before Open Food Facts.
 
 `search_food`, `log_food`, `log_barcode`, `log_label`, `log_recipe_portion`,
 `log_estimate`, `day_summary`, `week_summary`, `update_entry`, `delete_entry`,
-`set_goal`, `add_serving`, `suggest_foods`. Every logging result names the food's source.
+`set_goal`, `add_serving`, `suggest_foods`, `log_again`. Every logging result names the food's source.
 
 `log_estimate` looks each plate item up by its `search_name` in stored foods
 and BLS first and uses the model's numbers only when nothing matches. It never
@@ -59,6 +59,10 @@ it. Candidates come only from foods logged in the last 30 days and from the
 quick items, ranked by how often they were eaten and by protein per kcal, with
 the usual portion (the median grams logged). An empty history gives an empty
 list and a note. There is no built-in food list.
+
+`log_again` copies earlier entries (by id from `day_summary`) to now or to a
+given time: their food, grams, source and snapshot nutrients. `origin_ref` is
+not copied, so a copy of a cook-log entry is a plain chat entry.
 
 `eaten_at` is an ISO datetime, `HH:MM` or empty (now). A bare time means the
 latest such time that is not in the future, so "23:30" said at 00:20 is the

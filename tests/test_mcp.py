@@ -125,6 +125,7 @@ async def test_all_tools_are_listed_with_argument_descriptions(mcp):
             "set_goal",
             "add_serving",
             "suggest_foods",
+            "log_again",
         ]
     )
     for tool in tools:
@@ -717,3 +718,52 @@ async def test_suggest_foods_respects_limit_and_skips_protein_free_foods(mcp, st
     assert len(out["suggestions"]) == 2
     everything = await call(mcp, "suggest_foods", protein_g=20, limit=10)
     assert "Sugar" not in [s["name"] for s in everything["suggestions"]]
+
+
+# --- log_again ---------------------------------------------------------------
+
+
+async def test_log_again_copies_entries_to_the_given_time(mcp, store):
+    oats = stock(store, "Oat Flakes", 370, 13)
+    soy = stock(store, "Soy Drink", 40, 3.5)
+    first = eat(store, oats, 60)
+    second = eat(store, soy, 250)
+    out = await call(mcp, "log_again", entry_ids=[first.id, second.id], eaten_at="08:00")
+    assert out["logged"] == 2
+    copies = [store.get_entry(e["id"]) for e in out["entries"]]
+    assert [c.id for c in copies] == [second.id + 1, second.id + 2]
+    assert [c.name for c in copies] == ["Oat Flakes", "Soy Drink"]
+    assert copies[0].nutrients == first.nutrients and copies[1].nutrients == second.nutrients
+    assert (copies[0].grams, copies[0].food_id, copies[0].source) == (60, oats.id, Source.MANUAL)
+    assert all(c.eaten_at == datetime(2026, 9, 29, 8, 0, tzinfo=BERLIN) for c in copies)
+    assert out["day_so_far"]["protein_g"] == round(
+        copies[0].nutrients.protein_g + copies[1].nutrients.protein_g, 1
+    )
+    assert store.get_entry(first.id) == first
+
+
+async def test_log_again_defaults_to_now_and_drops_origin_ref(mcp, store):
+    original = store.log_entry(
+        name="Chili sin Carne",
+        nutrients=Nutrients(500, 30, 10, 60),
+        eaten_at=NOW - timedelta(days=1),
+        source=Source.TANDOOR,
+        origin=Origin.TANDOOR,
+        servings=1,
+        origin_ref="tandoor-cooklog:9",
+    )
+    out = await call(mcp, "log_again", entry_ids=[original.id])
+    copy = store.get_entry(out["entries"][0]["id"])
+    assert copy.eaten_at == NOW and copy.origin_ref is None
+    assert (copy.servings, copy.source, copy.origin) == (1, Source.TANDOOR, Origin.CHAT)
+
+
+async def test_log_again_logs_nothing_when_one_id_is_unknown(mcp, store):
+    entry = eat(store, stock(store, "Oat Flakes", 370, 13), 60)
+    await fails(mcp, "log_again", "Nothing stored", entry_ids=[entry.id, 999])
+    assert len(store.entries_between(NOW - timedelta(days=3), NOW + timedelta(days=1))) == 1
+
+
+async def test_log_again_refuses_a_future_time(mcp, store):
+    entry = eat(store, stock(store, "Oat Flakes", 370, 13), 60)
+    await fails(mcp, "log_again", "future", entry_ids=[entry.id], eaten_at="2026-10-05T08:00")
