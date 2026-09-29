@@ -4,13 +4,15 @@ What the docs say today (checked 2026-09, openfoodfacts-server docs/api):
 
 - Barcode: `GET /api/v2/product/<barcode>.json?fields=...`. An unknown code
   answers 404 with `status: 0`.
-- Text search: "only the v1 search API supports full text search". v2 and v3
-  have none, and the docs point to Search-a-licious for new integrations. This
-  client still uses the v1 `GET /cgi/search.pl` on the same host, because it
-  needs no second base URL. If OFF retires it, switch to Search-a-licious.
+- Text search: v2 and v3 have no full-text search, and the legacy
+  `/cgi/search.pl` answered 503 when checked. This client uses Search-a-licious
+  (https://search.openfoodfacts.org/docs): `GET /search` with `q`, `langs`,
+  `page_size` and `fields`, and a filter written inside `q` as
+  `fieldname:"value"`, e.g. `countries_tags:"en:germany"`. Hits come back under
+  `hits`, and `brands` is a list there but a comma-separated string in v2.
 - Rate limits per IP: 15 requests/min for product reads, 10 requests/min for
-  searches. Search-as-you-type is explicitly discouraged. The client does not
-  throttle itself; callers must not loop.
+  searches (the Search-a-licious docs state none). Search-as-you-type is
+  discouraged. The client does not throttle itself; callers must not loop.
 - Every client must send a custom User-Agent of the form
   `AppName/Version (ContactEmail)`.
 """
@@ -41,6 +43,7 @@ _FIELDS = ",".join(
 _MAPPED = {
     "energy-kcal_100g",
     "energy_100g",
+    "energy-kj_100g",
     "proteins_100g",
     "fat_100g",
     "carbohydrates_100g",
@@ -68,6 +71,8 @@ def _candidate(product: dict, barcode: str | None = None) -> FoodCandidate | Non
     kcal = _num(nutriments.get("energy-kcal_100g"))
     if kcal is None:
         kj = _num(nutriments.get("energy_100g"))
+        if kj is None:
+            kj = _num(nutriments.get("energy-kj_100g"))
         if kj is not None:
             kcal = kj / KJ_PER_KCAL
     protein = _num(nutriments.get("proteins_100g"))
@@ -79,7 +84,9 @@ def _candidate(product: dict, barcode: str | None = None) -> FoodCandidate | Non
     if not name or not ref:
         return None
 
-    brand = (product.get("brands") or "").split(",")[0].strip() or None
+    brands = product.get("brands") or ""
+    first = brands[0] if isinstance(brands, list) and brands else brands
+    brand = (first.split(",")[0].strip() if isinstance(first, str) else "") or None
 
     servings: tuple[Serving, ...] = ()
     grams = _num(product.get("serving_quantity"))
@@ -118,17 +125,17 @@ class OffClient:
         user_agent: str,
         base_url: str = "https://world.openfoodfacts.org",
         http: httpx.AsyncClient | None = None,
+        search_url: str = "https://search.openfoodfacts.org",
     ) -> None:
         self._owns_http = http is None
         self._http = http or httpx.AsyncClient(timeout=TIMEOUT_S)
         self._base = base_url.rstrip("/")
+        self._search_base = search_url.rstrip("/")
         self._headers = {"User-Agent": user_agent}
 
-    async def _get(self, path: str, params: dict[str, str | int]) -> httpx.Response:
+    async def _get(self, url: str, params: dict[str, str | int]) -> httpx.Response:
         try:
-            response = await self._http.get(
-                self._base + path, params=params, headers=self._headers, timeout=TIMEOUT_S
-            )
+            response = await self._http.get(url, params=params, headers=self._headers, timeout=TIMEOUT_S)
         except httpx.TimeoutException as exc:
             raise OffUnavailable("Open Food Facts did not answer in time, try again in a minute") from exc
         except httpx.TransportError as exc:
@@ -141,7 +148,7 @@ class OffClient:
 
     async def by_barcode(self, barcode: str) -> FoodCandidate | None:
         """None when the product is unknown or has no per-100 g energy and protein."""
-        response = await self._get(f"/api/v2/product/{barcode}.json", {"fields": _FIELDS})
+        response = await self._get(f"{self._base}/api/v2/product/{barcode}.json", {"fields": _FIELDS})
         if response.status_code == 404:
             return None
         response.raise_for_status()
@@ -153,23 +160,23 @@ class OffClient:
 
     async def search(self, query: str, limit: int = 10) -> list[FoodCandidate]:
         """Products sold in Germany first, German names where they exist."""
+        # Products sold in Germany but tagged elsewhere only turn up without the
+        # filter, so it is a second query and only when the first finds nothing.
+        found = await self._search(f'{query} countries_tags:"en:germany"', limit)
+        return found or await self._search(query, limit)
+
+    async def _search(self, q: str, limit: int) -> list[FoodCandidate]:
         params: dict[str, str | int] = {
-            "search_terms": query,
-            "search_simple": 1,
-            "action": "process",
-            "json": 1,
-            "lc": "de",
-            "tagtype_0": "countries",
-            "tag_contains_0": "contains",
-            "tag_0": "germany",
+            "q": q,
+            "langs": "de",
             # Ask for extra rows because products without kcal or protein are dropped.
             "page_size": min(max(limit * 3, limit), 50),
             "fields": _FIELDS,
         }
-        response = await self._get("/cgi/search.pl", params)
+        response = await self._get(f"{self._search_base}/search", params)
         response.raise_for_status()
         found: list[FoodCandidate] = []
-        for product in response.json().get("products") or []:
+        for product in response.json().get("hits") or []:
             candidate = _candidate(product)
             if candidate is not None:
                 found.append(candidate)

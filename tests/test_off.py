@@ -10,6 +10,7 @@ from snacky.sources.off import OffClient, OffUnavailable
 
 FIXTURES = Path(__file__).parent / "fixtures" / "off"
 BASE = "https://off.test"
+SEARCH = "https://search.test"
 UA = "snacky-test/0 (test@example.invalid)"
 
 
@@ -19,7 +20,7 @@ def fixture(name: str) -> dict:
 
 @pytest.fixture
 async def client():
-    c = OffClient(UA, base_url=BASE)
+    c = OffClient(UA, base_url=BASE, search_url=SEARCH)
     yield c
     await c.aclose()
 
@@ -69,25 +70,39 @@ async def test_unknown_barcode_is_none(client, status):
 
 @respx.mock
 async def test_search_skips_incomplete_and_maps_fields(client):
-    route = respx.get(f"{BASE}/cgi/search.pl").respond(json=fixture("search_mixed.json"))
+    route = respx.get(f"{SEARCH}/search").respond(json=fixture("search_mixed.json"))
     found = await client.search("quark", limit=10)
     assert [f.source_ref for f in found] == ["4000000000055", "4000000000062"]
     assert found[0].name == "Testquark"
+    assert found[0].brand == "Beispielhof"
     nuts = found[1]
     assert nuts.brand == "Musternuss"
     assert nuts.per_100g.kcal == 610
     assert nuts.per_100g.fibre_g == 7
     assert nuts.servings[0].grams == 30
+    assert route.call_count == 1
     params = route.calls[0].request.url.params
-    assert params["search_terms"] == "quark"
-    assert params["lc"] == "de"
-    assert params["tag_0"] == "germany"
+    assert params["q"] == 'quark countries_tags:"en:germany"'
+    assert params["langs"] == "de"
     assert "fields" in params
 
 
 @respx.mock
+async def test_search_falls_back_without_country_filter(client):
+    def answer(request: httpx.Request) -> httpx.Response:
+        if "countries_tags" in request.url.params["q"]:
+            return httpx.Response(200, json={"hits": []})
+        return httpx.Response(200, json=fixture("search_mixed.json"))
+
+    route = respx.get(f"{SEARCH}/search").mock(side_effect=answer)
+    found = await client.search("quark")
+    assert len(found) == 2
+    assert [c.request.url.params["q"] for c in route.calls] == ['quark countries_tags:"en:germany"', "quark"]
+
+
+@respx.mock
 async def test_search_respects_limit(client):
-    respx.get(f"{BASE}/cgi/search.pl").respond(json=fixture("search_mixed.json"))
+    respx.get(f"{SEARCH}/search").respond(json=fixture("search_mixed.json"))
     assert len(await client.search("x", limit=1)) == 1
 
 
@@ -100,7 +115,7 @@ async def test_rate_limit_raises(client):
 
 @respx.mock
 async def test_server_error_raises_on_search(client):
-    respx.get(f"{BASE}/cgi/search.pl").respond(503)
+    respx.get(f"{SEARCH}/search").respond(503)
     with pytest.raises(OffUnavailable):
         await client.search("x")
 

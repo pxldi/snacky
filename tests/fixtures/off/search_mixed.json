@@ -1,6 +1,6 @@
-{"count":4,"page":1,"page_size":30,"products":[
-{"code":"4000000000055","product_name":"Test Quark","product_name_de":"Testquark","brands":"Beispielhof","nutriments":{"energy-kcal_100g":67,"proteins_100g":12,"fat_100g":0.3,"carbohydrates_100g":4}},
-{"code":"4000000000062","product_name":"Test Nuts","brands":"Musternuss, Zweit","serving_size":"30 g","serving_quantity":"30","nutriments":{"energy-kcal_100g":"610","proteins_100g":"20","fat_100g":"54","carbohydrates_100g":"8","fiber_100g":"7"}},
-{"code":"4000000000079","product_name":"Test Wasser","nutriments":{"energy-kcal_100g":0}},
-{"code":"4000000000086","product_name":"Test Sirup","nutriments":{"energy-kcal_100g":300,"carbohydrates_100g":75}}
+{"count":4,"page":1,"page_size":30,"hits":[
+{"code":"4000000000055","product_name":"Test Quark","product_name_de":"Testquark","brands":["Beispielhof"],"nutriments":{"energy-kcal_100g":67,"energy-kj_100g":280,"proteins_100g":12,"fat_100g":0.3,"carbohydrates_100g":4}},
+{"code":"4000000000062","product_name":"Test Nuts","brands":["Musternuss","Zweit"],"serving_size":"30 g","serving_quantity":"30","nutriments":{"energy-kcal_100g":"610","proteins_100g":"20","fat_100g":"54","carbohydrates_100g":"8","fiber_100g":"7"}},
+{"code":"4000000000079","product_name":"Test Wasser","brands":[],"nutriments":{"energy-kcal_100g":0}},
+{"code":"4000000000086","product_name":"Test Sirup","brands":["Musterhof"],"nutriments":{"energy-kcal_100g":300,"carbohydrates_100g":75}}
 ]}
