@@ -238,3 +238,40 @@ def test_no_page_carries_inline_style_or_script(store):
         "/entries/1", data={"amount": "x", "day": TODAY.isoformat(), "time": "08:00"}
     )
     assert bad.status_code == 400 and "style=" not in bad.text
+
+
+def test_edit_page_shows_two_columns_when_the_entry_has_a_food(client, store):
+    food = store.upsert_food(
+        FoodCandidate(
+            name="Tofu natur",
+            source=Source.OFF,
+            per_100g=Nutrients(150, 11, 7, 1, None),
+            source_ref="tofu-1",
+        )
+    )
+    store.log_entry(
+        name=food.name,
+        nutrients=food.per_100g.for_grams(200),
+        eaten_at=NOW,
+        source=Source.OFF,
+        origin=Origin.CHAT,
+        grams=200,
+        food_id=food.id,
+    )
+    page = client.get("/entries/1").text
+    assert "je 100&nbsp;g" in page and "diese Portion" in page
+    assert "<td>11,0&nbsp;g</td>" in page and "22,0" in page
+    assert page.count("keine Angabe") == 2
+
+
+def test_edit_page_keeps_one_column_without_a_food(client, store):
+    eat(store, TODAY, 20)
+    page = client.get("/entries/1").text
+    assert "je 100" not in page and "diese Portion" not in page
+
+
+def test_units_are_not_upper_cased(client):
+    css = client.get("/static/app.css").text
+    for selector in (".row-meta", ".coupon-amount", ".mtag"):
+        block = css[css.index(selector + " {") :].split("}")[0]
+        assert "text-transform" not in block, selector

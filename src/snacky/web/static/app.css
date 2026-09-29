@@ -300,7 +300,6 @@ input {
   isolation: isolate;
   display: flex;
   flex-direction: column;
-  min-height: max(31rem, calc(100svh - 12rem));
   padding: 3.5rem 1rem 1.25rem;
   background: var(--unfilled);
   color: var(--white);
@@ -308,12 +307,8 @@ input {
   box-shadow: 0 10px 22px -6px rgb(20 16 20 / 0.5);
 }
 
-.front-past {
-  min-height: 22rem;
-}
-
 .front-week {
-  min-height: 17rem;
+  padding-bottom: 1.75rem;
   padding-top: 1.75rem;
 }
 
@@ -516,8 +511,7 @@ input {
 /* ---------- Coupons ---------- */
 
 .coupons-wrap {
-  margin-top: auto;
-  padding-top: 1.75rem;
+  padding-top: 1.5rem;
 }
 
 .coupons {
@@ -588,10 +582,8 @@ input {
 }
 
 .coupon-amount {
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
 }
 
 .coupon-stub {
@@ -624,6 +616,49 @@ input {
   line-height: 1.3;
   transform: rotate(-2deg);
   pointer-events: none;
+}
+
+/* Quick page: the same coupons on the pack colour, each with a small remove step. */
+.quick-list {
+  display: grid;
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quick-list .coupon-item {
+  max-width: 28rem;
+}
+
+.quick-block {
+  margin: 0 1rem 1.5rem;
+}
+
+.quick-block h2 {
+  margin: 0 0 0.25rem;
+  font: 700 1.75rem/1.1 var(--text);
+}
+
+.quick-block > p {
+  margin: 0 0 1.25rem;
+  font-size: 1rem;
+}
+
+.quick-block .remove {
+  max-width: 28rem;
+  margin-top: 0.5rem;
+}
+
+.quick-block .remove .btn {
+  min-height: 2.75rem;
+  width: auto;
+  padding: 0 1rem;
+  font-size: 1rem;
+}
+
+.quick-block .remove[open] .btn-ink {
+  margin-top: 0.5rem;
 }
 
 /* ---------- Day and week navigation ---------- */
@@ -731,9 +766,7 @@ input {
 }
 
 .mtag {
-  font-size: 0.8125rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-size: 0.9375rem;
   white-space: nowrap;
 }
 
@@ -792,9 +825,7 @@ a.row:hover .row-name {
 }
 
 .row-meta {
-  font-size: 0.8125rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 0.9375rem;
   line-height: 1.3;
 }
 
@@ -866,7 +897,7 @@ a.row:hover .row-name {
 
 .wrow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) 8rem;
   align-items: center;
   gap: 0.35rem 1rem;
   min-height: 4rem;
@@ -925,6 +956,8 @@ a.row:hover .row-name {
 
 .w-protein {
   justify-self: end;
+  min-width: 4.5ch;
+  text-align: right;
   font-size: 1.25rem;
   font-weight: 700;
   white-space: nowrap;
@@ -945,15 +978,14 @@ a.row:hover .row-name {
   font-size: 0.875rem;
 }
 
-.stamp {
-  display: inline-block;
-  padding: 0.05rem 0.5rem;
-  border: 2px solid var(--ink);
+.tag-train {
+  padding: 0.05rem 0.45rem;
+  background: var(--ink);
+  color: var(--panel);
   font-size: 0.8125rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  transform: rotate(-3deg);
+  letter-spacing: 0.1em;
 }
 
 .tag-today {
@@ -975,8 +1007,6 @@ a.row:hover .row-name {
 .page-title {
   margin: 0.5rem 1rem 1rem;
   font: 700 2.25rem/1.05 var(--text);
-  text-transform: uppercase;
-  letter-spacing: 0.01em;
   overflow-wrap: anywhere;
   text-wrap: balance;
 }
@@ -986,6 +1016,17 @@ a.row:hover .row-name {
   border-collapse: collapse;
   border-top: var(--heavy) solid var(--ink);
   font-size: 1.25rem;
+}
+
+.nutri thead th {
+  padding: 0.5rem 0 0.35rem;
+  border-top: 0;
+  font-size: 0.9375rem;
+  text-align: right;
+}
+
+.nutri thead th:first-child {
+  text-align: left;
 }
 
 .nutri th,
@@ -1223,18 +1264,6 @@ output {
   .pack-col {
     position: sticky;
     top: 1rem;
-  }
-
-  .front {
-    min-height: min(46rem, calc(100svh - 9rem));
-  }
-
-  .front-past {
-    min-height: 26rem;
-  }
-
-  .front-week {
-    min-height: 19rem;
   }
 
   .daynav {

@@ -41,27 +41,18 @@
         <span class="claim-num">{{ summary.totals.protein_g|num }}<span class="claim-unit">g</span></span>
         <span class="claim-word">Protein</span>
       </h1>
+      {% if protein_estimated_share > 0 %}
+      <p class="claim-fine">davon ≈&nbsp;{{ (protein_estimated_share * 100)|num }}&nbsp;% des Proteins geschätzt</p>
+      {% endif %}
       <p class="claim-line">{{ summary.totals.kcal|num }}&nbsp;kcal{% if kcal %} · Ziel <span class="nowrap">{{ kcal.short }}</span>{% endif %}</p>
       {% if st == "nogoal" %}<p class="claim-line">Kein Proteinziel gesetzt.</p>{% endif %}
-      {% if protein_estimated_share > 0 %}
-      <p class="claim-fine">davon ≈&nbsp;{{ (protein_estimated_share * 100)|num }}&nbsp;% geschätzt</p>
-      {% endif %}
 
       {% if is_today %}
       <div class="coupons-wrap">
         {% if quick %}
         <ul class="coupons" aria-label="Schnell eintragen">
           {% for q in quick %}
-          <li class="coupon-item">
-            <form method="post" action="/quick/{{ q.item.id }}/log">
-              <input type="hidden" name="next" value="/">
-              <button type="submit" class="coupon" aria-label="{{ q.item.label }}, {{ q.item.grams|amount }} g, eintragen{% if q.closes_gap %}, schließt die Lücke{% endif %}">
-                <span class="coupon-main"><span class="coupon-name">{{ q.item.label }}</span><span class="coupon-amount">{{ q.item.grams|amount }}&nbsp;g</span></span>
-                <span class="coupon-stub">+{{ q.nutrients.protein_g|amount }}&nbsp;g</span>
-              </button>
-            </form>
-            {% if q.closes_gap %}<span class="coupon-flag" aria-hidden="true">schließt die Lücke</span>{% endif %}
-          </li>
+          {{ p.coupon(q) }}
           {% endfor %}
         </ul>
         {% else %}
@@ -94,7 +85,7 @@
         <div class="meal-head">
           <h3>{{ clock(m.meal.start) }}&nbsp;Uhr</h3>
           {% if m.reached is not none %}
-          <span class="mtag{{ ' mtag-yes' if m.reached }}">{% if m.reached %}≥&nbsp;{{ meal_min|num }}&nbsp;g{% else %}unter&nbsp;{{ meal_min|num }}&nbsp;g{% endif %}</span>
+          <span class="mtag{{ ' mtag-yes' if m.reached }}">{% if m.reached %}ab&nbsp;{{ meal_min|num }}&nbsp;g{% else %}unter&nbsp;{{ meal_min|num }}&nbsp;g{% endif %}</span>
           {% endif %}
           <span class="meal-p">{{ m.meal.totals.protein_g|num }}&nbsp;g</span>
         </div>

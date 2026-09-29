@@ -15,3 +15,17 @@
   <rect class="fill" x="0" y="{{ 100 - pct }}" width="100" height="{{ pct }}"/>
 </svg>
 {% endmacro %}
+
+{# A tear-off quick item. The stub carries the protein; a tap logs it. #}
+{% macro coupon(q, next="/") %}
+<li class="coupon-item">
+  <form method="post" action="/quick/{{ q.item.id }}/log">
+    <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit" class="coupon" aria-label="{{ q.item.label }}, {{ q.item.grams|amount }} g, eintragen{% if q.closes_gap %}, schließt die Lücke{% endif %}">
+      <span class="coupon-main"><span class="coupon-name">{{ q.item.label }}</span><span class="coupon-amount">{{ q.item.grams|amount }}&nbsp;g</span></span>
+      <span class="coupon-stub">+{{ q.nutrients.protein_g|amount }}&nbsp;g</span>
+    </button>
+  </form>
+  {% if q.closes_gap %}<span class="coupon-flag" aria-hidden="true">schließt die Lücke</span>{% endif %}
+</li>
+{% endmacro %}

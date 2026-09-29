@@ -28,7 +28,7 @@ from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
 from snacky import config
-from snacky.model import Origin
+from snacky.model import Nutrients, Origin
 from snacky.sources.opengym import OpenGymClient
 from snacky.store import NotFound, Store
 from snacky.web import format as fmt
@@ -337,7 +337,17 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
 
     async def entry_page(request: Request) -> Response:
         entry = store.get_entry(request.path_params["entry_id"])
-        return render(request, "edit.html", entry=entry, back=_back(request, entry))
+        return render(request, "edit.html", entry=entry, back=_back(request, entry), per_100g=per_100g(entry))
+
+    def per_100g(entry: Any) -> Nutrients | None:
+        """Per-100 g values of the food behind an entry, None when it has none
+        (an estimate, a recipe portion, or a food that was since removed)."""
+        if entry.food_id is None:
+            return None
+        try:
+            return store.get_food(entry.food_id).per_100g
+        except NotFound:
+            return None
 
     def _back(request: Request, entry: Any) -> str:
         return _safe_next(request.query_params.get("back"), f"/?day={entry.eaten_at.date().isoformat()}")
@@ -358,7 +368,16 @@ def create_app(store: Store, *, opengym: OpenGymClient | None = None) -> Starlet
                     servings = amount
             store.update_entry(entry_id, grams=grams, servings=servings, eaten_at=eaten_at)
         except (_Rejected, ValueError) as exc:
-            return render(request, "edit.html", 400, entry=entry, back=back, error=str(exc), form=form)
+            return render(
+                request,
+                "edit.html",
+                400,
+                entry=entry,
+                back=back,
+                error=str(exc),
+                form=form,
+                per_100g=per_100g(entry),
+            )
         return RedirectResponse(_safe_next(back, "/"), status_code=303)
 
     async def entry_delete_page(request: Request) -> Response:

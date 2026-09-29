@@ -18,42 +18,27 @@
   <h1 class="page-title">Schnellwahl</h1>
   {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
 
-  <section class="panel" aria-labelledby="list-h">
-    <h2 id="list-h">Deine Schnellwahl</h2>
-    <p class="panel-sub">Ein Tipp trägt den Posten mit der Uhrzeit von jetzt ein.</p>
-    <div class="tbl">
-      {% if not items %}
-      <p class="empty">Noch keine Schnellwahl. Suche unten ein Lebensmittel und lege es an.</p>
-      {% endif %}
-      <ul class="rows">
-        {% for i in items %}
-        <li class="qrow">
-          <div class="row row-static">
-            <span class="row-main">
-              <span class="row-name">{{ i.item.label }}</span>
-              <span class="row-meta">{{ i.food.name }} · {{ i.item.grams|amount }}&nbsp;g</span>
-            </span>
-            <span class="row-nums">
-              <span class="row-p">+{{ i.nutrients.protein_g|amount }}&nbsp;g</span>
-              <span class="row-k">{{ i.nutrients.kcal|num }}&nbsp;kcal</span>
-            </span>
-          </div>
-          <div class="actions">
-            <form method="post" action="/quick/{{ i.item.id }}/log">
-              <input type="hidden" name="next" value="/quick">
-              <button type="submit" class="btn btn-primary" aria-label="{{ i.item.label }}, {{ i.item.grams|amount }} g, eintragen">Eintragen</button>
-            </form>
-            <details class="remove">
-              <summary class="btn">Entfernen<span class="sr">: {{ i.item.label }}</span></summary>
-              <form method="post" action="/quick/{{ i.item.id }}/remove">
-                <button type="submit" class="btn btn-danger" aria-label="{{ i.item.label }} wirklich entfernen">Wirklich entfernen</button>
-              </form>
-            </details>
-          </div>
-        </li>
-        {% endfor %}
-      </ul>
-    </div>
+  <section class="quick-block" aria-labelledby="list-h">
+    <h2 id="list-h">Zum Eintragen</h2>
+    <p>Ein Tipp trägt den Posten mit der Uhrzeit von jetzt ein.</p>
+    {% if not items %}
+    <p>Noch keine Schnellwahl. Suche unten ein Lebensmittel und lege es an.</p>
+    {% endif %}
+    <ul class="quick-list">
+      {% for i in items %}
+      <li>
+        <ul class="coupons">
+          {{ p.coupon(i, "/quick") }}
+        </ul>
+        <details class="remove">
+          <summary class="btn btn-ground">Entfernen<span class="sr">: {{ i.item.label }}</span></summary>
+          <form method="post" action="/quick/{{ i.item.id }}/remove">
+            <button type="submit" class="btn btn-ink" aria-label="{{ i.item.label }} wirklich entfernen">Wirklich entfernen</button>
+          </form>
+        </details>
+      </li>
+      {% endfor %}
+    </ul>
   </section>
 
   <section class="panel" aria-labelledby="add-h">

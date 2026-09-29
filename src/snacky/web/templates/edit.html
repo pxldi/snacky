@@ -7,13 +7,19 @@
   <section class="panel" aria-labelledby="facts-h">
     <h2 id="facts-h">Nährwerte</h2>
     <p class="panel-sub">{% if amount_label(entry) %}für {{ amount_label(entry) }}, {% endif %}{{ date_short(entry.eaten_at.date()) }} um {{ clock(entry.eaten_at) }}&nbsp;Uhr</p>
+    {% set n = entry.nutrients %}
     <table class="nutri">
+      {% if per_100g %}
+      <thead>
+        <tr><th scope="col"><span class="sr">Nährwert</span></th><th scope="col">je 100&nbsp;g</th><th scope="col">diese Portion</th></tr>
+      </thead>
+      {% endif %}
       <tbody>
-        <tr><th scope="row">Energie</th><td>{{ entry.nutrients.kcal|num }}&nbsp;kcal</td></tr>
-        <tr><th scope="row">Fett</th><td>{{ entry.nutrients.fat_g|num(1) }}&nbsp;g</td></tr>
-        <tr><th scope="row">Kohlenhydrate</th><td>{{ entry.nutrients.carbs_g|num(1) }}&nbsp;g</td></tr>
-        <tr><th scope="row">Ballaststoffe</th><td>{{ value_label(entry.nutrients.fibre_g, "g", 1) }}</td></tr>
-        <tr class="nutri-protein"><th scope="row">Eiweiß</th><td class="{{ 'est' if est }}">{{ protein_label(entry) }}</td></tr>
+        <tr><th scope="row">Energie</th>{% if per_100g %}<td>{{ per_100g.kcal|num }}&nbsp;kcal</td>{% endif %}<td>{{ n.kcal|num }}&nbsp;kcal</td></tr>
+        <tr><th scope="row">Fett</th>{% if per_100g %}<td>{{ per_100g.fat_g|num(1) }}&nbsp;g</td>{% endif %}<td>{{ n.fat_g|num(1) }}&nbsp;g</td></tr>
+        <tr><th scope="row">Kohlenhydrate</th>{% if per_100g %}<td>{{ per_100g.carbs_g|num(1) }}&nbsp;g</td>{% endif %}<td>{{ n.carbs_g|num(1) }}&nbsp;g</td></tr>
+        <tr><th scope="row">Ballaststoffe</th>{% if per_100g %}<td>{{ value_label(per_100g.fibre_g, "g", 1) }}</td>{% endif %}<td>{{ value_label(n.fibre_g, "g", 1) }}</td></tr>
+        <tr class="nutri-protein"><th scope="row">Eiweiß</th>{% if per_100g %}<td>{{ per_100g.protein_g|num(1) }}&nbsp;g</td>{% endif %}<td class="{{ 'est' if est }}">{{ protein_label(entry) }}</td></tr>
       </tbody>
     </table>
     <dl class="facts">

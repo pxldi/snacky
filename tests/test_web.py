@@ -143,7 +143,7 @@ def test_day_page_with_data(client, seeded):
     assert "Tofu natur" in page and "250\u00a0g" in page and "Open Food Facts" in page
     assert "Pasta im Restaurant" in page
     assert "geschätzt (niedrig)" in page and "≈ 24\u00a0g" in page
-    assert "davon ≈&nbsp;47&nbsp;% geschätzt" in page  # 24 of 51.5 g protein
+    assert "davon ≈&nbsp;47&nbsp;% des Proteins geschätzt" in page  # 24 of 51.5 g protein
     assert "erreicht" not in page and "unter&nbsp;" not in page  # no per-meal target without the env var
 
 
@@ -176,7 +176,7 @@ def test_no_estimate_marker_for_high_confidence(client, store):
 def test_meal_protein_target(client, seeded, monkeypatch):
     monkeypatch.setenv("SNACKY_MEAL_PROTEIN_MIN", "25")
     page = client.get("/").text
-    assert "≥&nbsp;25&nbsp;g" in page  # 27.5 g breakfast
+    assert "ab&nbsp;25&nbsp;g" in page  # 27.5 g breakfast
     assert "unter&nbsp;25&nbsp;g" in page  # 24 g lunch
 
 
@@ -413,7 +413,7 @@ def test_week_view_with_start(client, seeded):
 def test_week_view_marks_training_days(store, seeded):
     gym = FakeGym([Workout(date(2026, 9, 29), "Session A", 50), Workout(date(2026, 10, 12), "Session B")])
     page = TestClient(create_app(store, opengym=gym)).get("/week").text
-    assert page.count('class="stamp"') == 1 and "Session A" in page
+    assert page.count('class="tag-train"') == 1 and "Session A" in page
     assert "openGym" not in page
     assert gym.calls == [(date(2026, 9, 28), date(2026, 10, 5))]
 
@@ -424,7 +424,7 @@ def test_week_view_survives_opengym_failure(store, seeded, error):
     response = client.get("/week")
     assert response.status_code == 200
     assert "Trainingstage konnten nicht von openGym geladen werden" in response.text
-    assert 'class="stamp"' not in response.text and "52&nbsp;g" in response.text
+    assert 'class="tag-train"' not in response.text and "52&nbsp;g" in response.text
 
 
 def test_week_view_survives_opengym_timeout(store, seeded, monkeypatch):

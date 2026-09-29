@@ -59,7 +59,7 @@
           <span class="w-protein">–<span class="sr"> noch nicht eingetragen</span></span>
           {% endif %}
           {% if r.training %}
-          <span class="w-train">{% for w in r.training %}<span class="stamp">Training</span>{% if w.name %} <span class="w-workout">{{ w.name }}</span>{% endif %}{% endfor %}</span>
+          <span class="w-train">{% for w in r.training %}<span class="tag-train">Training</span>{% if w.name %} <span class="w-workout">{{ w.name }}</span>{% endif %}{% endfor %}</span>
           {% endif %}
         </a>
       </li>
