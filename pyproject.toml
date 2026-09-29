@@ -1,0 +1,43 @@
+[project]
+name = "snacky"
+version = "0.1.0"
+description = "Protein and calorie log fed by a chat assistant over MCP"
+readme = "README.md"
+license = "GPL-3.0-only"
+requires-python = ">=3.14"
+# The MCP stack is pinned to the same versions as the homelab MCP servers the
+# assistant already talks to, so both behave the same on the wire.
+dependencies = [
+    "mcp==2.2.0",
+    "httpx==0.28.1",
+    "uvicorn==0.54.0",
+    "starlette==1.7.0",
+    "pydantic==2.13.5",
+    "jinja2==3.1.6",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "respx>=0.23.1",
+    "ruff>=0.16.9",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/snacky"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 110
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
