@@ -1,0 +1,32 @@
+/* Self-hosted fonts. The family names are local aliases for the subset files. */
+@font-face {
+  font-family: "Snacky Display";
+  src: url("/static/fonts/bricolage-grotesque-extrabold.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Snacky Claim";
+  src: url("/static/fonts/fira-sans-compressed-heavy.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Snacky Text";
+  src: url("/static/fonts/fira-sans-condensed-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Snacky Text";
+  src: url("/static/fonts/fira-sans-condensed-bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
