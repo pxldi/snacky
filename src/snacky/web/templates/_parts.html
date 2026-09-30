@@ -10,10 +10,17 @@
 
 {# The fill of a pack front. y and height are computed here because the
    content-security policy forbids style attributes. #}
+{# The fill's top edge is a low wave, so the eaten share reads as a level inside
+   the pack and not as a flat band of colour. A full pack is a plain rectangle. #}
 {% macro fill(share, from_ratio=none) %}
 {% set pct = (share * 100)|round(2) %}
+{% set from_attr = (' data-from="%.3f"'|format(from_ratio)) if from_ratio is not none else '' %}
 <svg class="fill-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-  <rect class="fill" x="0" y="{{ 100 - pct }}" width="100" height="{{ pct }}"{% if from_ratio is not none %} data-from="{{ '%.3f'|format(from_ratio) }}"{% endif %}/>
+  {% if pct >= 100 %}
+  <rect class="fill" x="0" y="0" width="100" height="100"{{ from_attr|safe }}/>
+  {% elif pct > 0 %}
+  <path class="fill" d="M0 {{ 100 - pct }} q8.333 -2.4 16.667 0 t16.667 0 t16.667 0 t16.667 0 t16.667 0 t16.667 0 V100 H0 Z"{{ from_attr|safe }}/>
+  {% endif %}
 </svg>
 {% endmacro %}
 

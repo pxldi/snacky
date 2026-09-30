@@ -98,13 +98,16 @@ def test_no_sticker_without_a_goal():
 def test_fill_is_drawn_with_svg_attributes(client, store):
     eat(store, TODAY, 25)
     page = client.get("/").text
-    assert '<rect class="fill" x="0" y="75.0" width="100" height="25.0"/>' in page
+    assert '<path class="fill" d="M0 75.0 q8.333 -2.4 16.667 0' in page
+    # The cap names the share, so the level can be read without the colours.
+    assert "100&nbsp;g · 25&nbsp;%" in page
 
 
 def test_met_day_fills_the_whole_front(client, store):
     eat(store, TODAY, 130)
     page = client.get("/").text
-    assert 'data-state="met"' in page and 'y="0.0" width="100" height="100.0"' in page
+    assert 'data-state="met"' in page
+    assert '<rect class="fill" x="0" y="0" width="100" height="100"/>' in page
 
 
 def add_quick(store, protein: float) -> None:

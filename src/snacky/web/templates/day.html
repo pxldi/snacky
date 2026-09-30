@@ -20,7 +20,7 @@
   <div class="pack-col">
     <section class="front{{ '' if is_today else ' front-past' }}" data-state="{{ st }}" aria-labelledby="claim">
       {% if st != "nogoal" or not is_today %}
-      <div class="front-cap"><p class="cap-label">{% if not is_today %}<span class="caps">{{ date_short(day)|replace(",", "") }}{% if st != "nogoal" %} · Ziel{% endif %}</span>{% else %}<span class="caps">Ziel</span>{% endif %}{% if st != "nogoal" %} {{ protein.limit|num }}&nbsp;g{% endif %}</p></div>
+      <div class="front-cap"><p class="cap-label">{% if not is_today %}<span class="caps">{{ date_short(day)|replace(",", "") }}{% if st != "nogoal" %} · Ziel{% endif %}</span>{% else %}<span class="caps">Ziel</span>{% endif %}{% if st != "nogoal" %} {{ protein.limit|num }}&nbsp;g{% endif %}{% if st in ("open", "missed", "empty") %} · {{ (protein.fraction * 100)|round|int }}&nbsp;%{% endif %}</p></div>
       {% endif %}
       {{ p.fill(protein.fraction if st != "nogoal" else 0, fill_from) }}
 
@@ -48,20 +48,22 @@
       <p class="claim-line">{{ summary.totals.kcal|num }}&nbsp;kcal{% if kcal %} · Ziel <span class="nowrap">{{ kcal.short }}</span>{% endif %}</p>
       {% if st == "nogoal" %}<p class="claim-line">Kein Proteinziel gesetzt.</p>{% endif %}
 
-      {% if is_today %}
-      <div class="coupons-wrap">
-        {% if quick %}
-        <ul class="coupons" aria-label="Schnell eintragen">
-          {% for q in quick %}
-          {{ p.coupon(q) }}
-          {% endfor %}
-        </ul>
-        {% else %}
-        <p class="claim-line">Noch keine Schnellwahl. <a href="/quick">Lege welche an.</a></p>
-        {% endif %}
-      </div>
-      {% endif %}
     </section>
+    {# Below the pack, not inside it: inside, the coupons covered the fill's
+       edge and the level stopped reading as a level. #}
+    {% if is_today %}
+    <div class="coupons-wrap">
+      {% if quick %}
+      <ul class="coupons" aria-label="Schnell eintragen">
+        {% for q in quick %}
+        {{ p.coupon(q) }}
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="claim-line">Noch keine Schnellwahl. <a href="/quick">Lege welche an.</a></p>
+      {% endif %}
+    </div>
+    {% endif %}
 
     <nav class="daynav" aria-label="Tag wechseln">
       <a class="btn btn-ground" href="/?day={{ prev_day.isoformat() }}" rel="prev">{{ p.arrow_left() }}Vortag</a>

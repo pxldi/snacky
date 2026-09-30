@@ -347,6 +347,20 @@ input {
   box-shadow: 0 10px 22px -6px rgb(20 16 20 / 0.5);
 }
 
+/* On a phone the front used to run edge to edge, and its fill is the same
+   colour as the page: the unfilled share read as a separate header block. An
+   ink contour and a margin make it one pack with a level inside it. */
+.pack-col .front {
+  margin: 0.75rem 0.75rem 0;
+  border: 2px solid var(--edge);
+}
+
+/* The week has no coupons or day buttons under its front, so the panel would
+   touch the pack. */
+.pack-col .front-week {
+  margin-bottom: 1.25rem;
+}
+
 .front-past .front-cap,
 .front-past[data-state="met"] .front-cap {
   border-bottom-color: var(--print);
@@ -563,7 +577,8 @@ input {
 /* ---------- Coupons ---------- */
 
 .coupons-wrap {
-  padding-top: 1.5rem;
+  padding: 1.5rem 0.75rem 0;
+  color: var(--white);
 }
 
 .coupons {
@@ -1335,6 +1350,14 @@ output {
   .pack-col {
     position: sticky;
     top: 1rem;
+  }
+
+  .pack-col .front {
+    margin: 0;
+  }
+
+  .coupons-wrap {
+    padding-inline: 0;
   }
 
   .daynav {
