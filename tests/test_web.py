@@ -134,8 +134,9 @@ def test_pages_render_empty(client):
 
 def test_day_page_with_data(client, seeded):
     page = client.get("/").text
-    assert "Bundeslebensmittelschlüssel 4.0, Max Rubner-Institut, CC BY 4.0" in page
-    assert "Open Food Facts, ODbL" in page
+    # The data sources are credited in the README and the image's NOTICE, not
+    # on a private instance's pages.
+    assert "Rubner" not in page and "ODbL" not in page
     assert re.search(r'class="claim-num">52<', page)  # 27.5 + 24 = 51.5 g protein
     assert "Ziel</span> 120&nbsp;g" in page
     assert "Noch 69 g" in page  # the gap, next to the total

@@ -1270,20 +1270,6 @@ output {
   padding-top: 1rem;
 }
 
-/* ---------- Fine print ---------- */
-
-.fine-print {
-  width: min(100%, 68.75rem);
-  margin-inline: auto;
-  padding: 0 1rem 1rem;
-}
-
-.fine-print p {
-  max-width: 65ch;
-  margin: 0;
-  font-size: var(--t-s);
-}
-
 /* ---------- Wide screens ---------- */
 
 @media (min-width: 60rem) {
@@ -1362,9 +1348,5 @@ output {
 
   .page {
     padding-inline: 0;
-  }
-
-  .fine-print {
-    padding-top: 0.5rem;
   }
 }

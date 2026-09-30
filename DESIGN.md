@@ -248,7 +248,7 @@ A two-ink raspberry print with one mustard spot colour and print black.
 - **Title** (`title`): panel headings ("Nährwerte", "Tage der Woche") and the table total.
 - **Body** (`body`): text on the raspberry ground and on controls, always bold.
 - **Table row** (`table-row`): entry names and row numbers inside the label panel.
-- **Meta** (`meta`): amount and source under an entry, fine print.
+- **Meta** (`meta`): amount and source under an entry.
 - **Label** (`label`): short uppercase data tags ("Heute", "Training") and the cap strip ("Ziel 120 g", or "So 27.9. · Ziel 120 g" on a past day). Table field names on the edit page use the same case at the same size, 0.06em, regular weight.
 
 ### Named Rules
