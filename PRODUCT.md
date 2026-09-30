@@ -60,8 +60,10 @@ as an estimate. The web UI is the mirror of that conversation, not the input.
   playful and encouraging: showing up counts more than performance, and a
   short day is never scolded.
 - Everything shown as a suggestion or example is plant-based.
-- Data sources are credited: "Bundeslebensmittelschlüssel 4.0, Max
-  Rubner-Institut, CC BY 4.0" and "Open Food Facts, ODbL".
+- Data sources are credited where the data is passed on: the README and the
+  published image's NOTICE name "Bundeslebensmittelschlüssel 4.0, Max
+  Rubner-Institut, CC BY 4.0" and "Open Food Facts, ODbL". The UI of a
+  private instance carries no credit line.
 
 ## Evidence on Hand
 

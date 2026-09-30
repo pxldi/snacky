@@ -39,6 +39,9 @@ WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 COPY src/ ./src/
 COPY --from=bls /out/bls.sqlite /app/data/bls.sqlite
+# The BLS licence (CC BY 4.0) asks for credit wherever the data is passed on;
+# the published image is where that happens, so the notice travels with it.
+COPY LICENSE NOTICE /app/
 
 # The commit this image was built from, reported by /health as "build". The
 # homelab's wait-for-mcp compares it to know a rollout finished.
