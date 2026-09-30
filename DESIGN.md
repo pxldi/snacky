@@ -202,7 +202,7 @@ Surfaces read as objects laid on the card: the front, the sticker and the coupon
 - One claim numeral per front, set in a compressed heavy face at 6rem.
 - A seal sticker in Senf that states the gap, flips on a met day.
 - Label panels ruled with one heavy rule and hairlines, like a food label.
-- Quick items as tear-off coupons with a perforated protein stub.
+- Quick items as tear-off coupons with a perforated protein stub, hung under the pack.
 - A print-black bottom bar on phones that moves into the brand strip on wide screens.
 
 ## Colors
@@ -227,7 +227,9 @@ A two-ink raspberry print with one mustard spot colour and print black.
 ### Named Rules
 **The Drenched Ground Rule.** The page ground is always the pack colour, `ground`. There is no grey or white page behind the pack; white appears only as a printed object on it (label panel, coupon, button).
 
-**The State Colours the Front Rule.** The day's protein state is shown by how much of the front is filled with Himbeer, from the bottom up. A met day fills the whole front, cap strip included. Numbers and words carry the same state, so colour is never the only signal.
+**The State Colours the Front Rule.** The day's protein state is shown by how much of the front is filled with Himbeer, from the bottom up. The fill's top edge is a low wave, so it reads as a level, and the cap names the share ("Ziel 145 g · 38 %"). A met day fills the whole front, cap strip included. Numbers and words carry the same state, so colour is never the only signal.
+
+**The Pack Contour Rule.** The front always stands off the ground as one object: a 2px `edge` contour, the front lift shadow, and on phones a 0.75rem margin. Nothing sits inside the front below the claim; the coupons hang under the pack, so no control ever covers the fill's edge. Without the contour, a fill the same colour as the ground runs into the page and the unfilled share reads as a separate header block.
 
 **The Spot Colour Rule.** Senf is a patch or a mark, never text on raspberry. Text on Senf is print black.
 
