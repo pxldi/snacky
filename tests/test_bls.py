@@ -210,3 +210,35 @@ def test_common_names_map_to_bls_names(tmp_path):
     assert names(idx.search("Vollkornnudeln"))[0] == "Vollkornteigwaren eifrei, roh"
     assert names(idx.search("Brokkoli"))[0] == "Broccoli roh"
     assert names(idx.search("Vollkornreis")) == ["Reis unpoliert, roh"]
+
+
+def test_recipe_style_names_fall_back_to_plain_foods(tmp_path):
+    idx = mini_index(
+        tmp_path,
+        [
+            ("G480100", "Speisezwiebel roh"),
+            ("G484100", "Perlzwiebel roh"),
+            ("W332000", "Gekochte Zwiebelwurst"),
+            ("G561100", "Tomate roh"),
+            ("G560900", "Tomate Konserve"),
+            ("G211100", "Spinat roh"),
+            ("G220100", "Bleichsellerie roh"),
+            ("C352000", "Reis poliert, roh"),
+        ],
+    )
+    assert names(idx.search("Zwiebel"))[0] == "Speisezwiebel roh"
+    assert names(idx.search("Zwiebel(n)"))[0] == "Speisezwiebel roh"
+    assert names(idx.search("rote Zwiebel"))[0] == "Speisezwiebel roh"
+    assert names(idx.search("gehackte Tomaten")) == ["Tomate Konserve"]
+    assert names(idx.search("stückige Tomaten aus der Dose")) == ["Tomate Konserve"]
+    assert names(idx.search("Kirschtomaten"))[0] == "Tomate roh"
+    assert names(idx.search("Babyspinat")) == ["Spinat roh"]
+    assert names(idx.search("Staudensellerie")) == ["Bleichsellerie roh"]
+    assert names(idx.search("Basmatireis")) == ["Reis poliert, roh"]
+
+
+def test_fallback_only_when_the_plain_query_finds_nothing(tmp_path):
+    idx = mini_index(tmp_path, [("G561100", "Tomate roh"), ("G560400", "Tomate getrocknet")])
+    # "getrocknete Tomaten" matches as typed, so the dried tomato is not dropped for the raw one.
+    assert names(idx.search("getrocknete Tomaten")) == ["Tomate getrocknet"]
+    assert idx.search("Zahnbürste") == []

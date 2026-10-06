@@ -274,6 +274,49 @@ class TandoorClient:
         }
         return _to_food(await self._request("PATCH", f"/api/food/{food_id}/", json=payload))
 
+    # Raw reads and writes for tandoor_units, which works on Tandoor's own shapes.
+
+    async def recipe_ids(self) -> list[int]:
+        return [r["id"] for r in await self._pages("/api/recipe/")]
+
+    async def recipe(self, recipe_id: int) -> dict[str, Any]:
+        return await self._request("GET", f"/api/recipe/{recipe_id}/")
+
+    async def units(self) -> list[dict[str, Any]]:
+        return await self._pages("/api/unit/")
+
+    async def unit_conversions(self) -> list[dict[str, Any]]:
+        return await self._pages("/api/unit-conversion/")
+
+    async def gram_unit(self) -> dict[str, Any]:
+        return await self._gram_unit()
+
+    async def ensure_unit(self, name: str) -> dict[str, Any]:
+        """The unit called `name`, created if missing. Tandoor's unit create
+        returns an existing unit of that name or plural instead of a duplicate."""
+        for u in await self.units():
+            if name.casefold() in ((u.get("name") or "").casefold(), (u.get("plural_name") or "").casefold()):
+                return u
+        return await self._request("POST", "/api/unit/", json={"name": name})
+
+    async def add_unit_conversion(
+        self, food: dict[str, Any], unit: dict[str, Any], grams: float
+    ) -> dict[str, Any]:
+        """1 `unit` of `food` weighs `grams`. The food goes as id and name only:
+        the nested food serializer then changes nothing but the name it already has."""
+        payload = {
+            "base_amount": 1,
+            "base_unit": unit,
+            "converted_amount": round(grams, 3),
+            "converted_unit": await self._gram_unit(),
+            "food": {"id": food["id"], "name": food["name"]},
+        }
+        return await self._request("POST", "/api/unit-conversion/", json=payload)
+
+    async def set_ingredient_unit(self, ingredient_id: int, unit: dict[str, Any]) -> dict[str, Any]:
+        # The full unit object, because the nested UnitSerializer.update reads `name`.
+        return await self._request("PATCH", f"/api/ingredient/{ingredient_id}/", json={"unit": unit})
+
     async def recipe_nutrition(self, recipe_id: int) -> RecipeNutrition:
         """Nutrition per serving as Tandoor computes it from its food properties."""
         recipe = await self._request("GET", f"/api/recipe/{recipe_id}/")

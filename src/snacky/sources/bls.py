@@ -263,7 +263,63 @@ _SYNONYMS = {
     "vollkornnudeln": "vollkornteigwaren",
     "vollkornreis": "reis unpoliert",
     "brokkoli": "broccoli",
+    # A plain onion is a Speisezwiebel; "Zwiebel" alone also finds Zwiebelwurst.
+    "zwiebel": "speisezwiebel",
+    "zwiebeln": "speisezwiebel",
+    "babyspinat": "spinat",
+    "blattspinat": "spinat",
+    "staudensellerie": "bleichsellerie",
+    "stangensellerie": "bleichsellerie",
 }
+
+# Recipe food names carry words BLS never has ("gehackte Tomaten aus der Dose").
+# They are dropped, or read as "Konserve", only when the plain query finds nothing.
+_FILLER = {
+    "aus",
+    "der",
+    "die",
+    "das",
+    "dem",
+    "den",
+    "von",
+    "vom",
+    "mit",
+    "und",
+    "oder",
+    "im",
+    "frisch",
+    "frische",
+    "frischer",
+    "frisches",
+    "fein",
+    "feine",
+    "grob",
+    "grobe",
+    "gemahlen",
+    "gemahlene",
+    "gemahlener",
+    "ganz",
+    "ganze",
+    "klein",
+    "kleine",
+    "kleiner",
+    "gross",
+    "große",
+    "großer",
+    "grosse",
+    "mittelgroß",
+    "mittelgroße",
+    "bio",
+    "tk",
+    "kalt",
+    "warm",
+    "gehackt",
+    "gehackte",
+    "gehackter",
+    "gewurfelt",
+    "gewurfelte",
+}
+_CANNED = {"dose", "dosen", "konserve", "konserven", "stuckig", "stuckige", "stuckiger"}
 
 # A flour or a starch is not what "Reis" or "Hafer" means, even when it is named first.
 _PROCESSED = {
@@ -281,12 +337,42 @@ _PROCESSED = {
 }
 
 
-def _match_expr(query: str) -> tuple[str, set[str]] | None:
-    """An FTS5 expression for the query and the folded words a plain food's name
-    may start with."""
+def _tokens(query: str) -> list[str]:
     tokens: list[str] = []
     for word in _WORD.findall(query):
         tokens.extend(_SYNONYMS.get(_fold(word), _fold(word)).split())
+    return tokens
+
+
+def _relaxed(tokens: list[str]) -> list[list[str]]:
+    """Looser token lists to try, in order, when the query as typed finds nothing.
+    Tandoor food names come from recipe text, so they carry descriptions
+    ("Zwiebel(n)", "stückige Tomaten aus der Dose") and compounds ("Kirschtomaten")
+    that BLS names differently. A human reviews every match, so recall matters
+    more than precision here."""
+    canned = any(t in _CANNED for t in tokens) or (
+        "gehackte" in tokens and any(t.startswith("tomat") for t in tokens)
+    )
+    core = [t for t in tokens if t not in _FILLER and t not in _CANNED and len(t) > 2]
+    if not core:
+        return []
+    out: list[list[str]] = []
+    if canned:
+        out.append([*core, "konserve"])
+    # German puts the noun last: "rote Zwiebel" -> "Zwiebel".
+    for i in range(len(core)):
+        out.append(core[i:])
+    last = core[-1]
+    # "Kirschtomaten" -> "tomaten": the head of a compound is its tail.
+    for i in range(2, len(last) - 3):
+        out.append([_SYNONYMS.get(last[i:], last[i:])])
+    return [o for i, o in enumerate(out) if o != tokens and o not in out[:i]]
+
+
+def _match_expr(tokens: list[str]) -> tuple[str, set[str]] | None:
+    """An FTS5 expression for the query tokens and the folded words a plain
+    food's name may start with."""
+    tokens = [w for t in tokens for w in t.split()]
     if not tokens:
         return None
     parts = []
@@ -338,17 +424,15 @@ class BlsIndex:
     def search(self, query: str, limit: int = 10) -> list[FoodCandidate]:
         """German food names, best match first. Plain foods rank above
         prepared dishes that contain the word."""
-        expr = _match_expr(query)
-        if expr is None or limit <= 0:
+        if limit <= 0:
             return []
-        match, heads = expr
-        try:
-            rows = self._con.execute(
-                "SELECT f.* FROM foods_fts JOIN foods f ON f.code = foods_fts.code WHERE foods_fts MATCH ?",
-                (match,),
-            ).fetchall()
-        except sqlite3.OperationalError:
-            return []
+        tokens = _tokens(query)
+        rows, heads = self._rows(tokens)
+        if not rows:
+            for loose in _relaxed(tokens):
+                rows, heads = self._rows(loose)
+                if rows:
+                    break
 
         def rank(row: sqlite3.Row) -> tuple[bool, int, bool, int, str]:
             words = _WORD.findall(_fold(row["name"]))
@@ -370,6 +454,20 @@ class BlsIndex:
             )
 
         return [_candidate(r) for r in sorted(rows, key=rank)[:limit]]
+
+    def _rows(self, tokens: list[str]) -> tuple[list[sqlite3.Row], set[str]]:
+        expr = _match_expr(tokens)
+        if expr is None:
+            return [], set()
+        match, heads = expr
+        try:
+            rows = self._con.execute(
+                "SELECT f.* FROM foods_fts JOIN foods f ON f.code = foods_fts.code WHERE foods_fts MATCH ?",
+                (match,),
+            ).fetchall()
+        except sqlite3.OperationalError:
+            return [], set()
+        return rows, heads
 
     def get(self, code: str) -> FoodCandidate | None:
         """One food by its BLS code."""
