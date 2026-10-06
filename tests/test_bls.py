@@ -242,3 +242,29 @@ def test_fallback_only_when_the_plain_query_finds_nothing(tmp_path):
     # "getrocknete Tomaten" matches as typed, so the dried tomato is not dropped for the raw one.
     assert names(idx.search("getrocknete Tomaten")) == ["Tomate getrocknet"]
     assert idx.search("Zahnbürste") == []
+
+
+def test_pasta_flour_and_drinks_use_bls_names(tmp_path):
+    idx = mini_index(
+        tmp_path,
+        [
+            ("E401000", "Teigwaren eifrei, roh"),
+            ("C1A1000", "Weizen Mehl Type 405"),
+            ("C660000", "Haferdrink ungesüßt"),
+            ("R125000", "Balsamicoessig"),
+            ("H862200", "Miso/Sojabohnenpaste"),
+            ("P3A1000", "Gin Tonic"),
+            ("N4A1000", "Latte macchiato"),
+        ],
+    )
+    assert names(idx.search("Rigatoni")) == ["Teigwaren eifrei, roh"]
+    assert names(idx.search("Lasagneplatten")) == ["Teigwaren eifrei, roh"]
+    assert names(idx.search("Mehl")) == ["Weizen Mehl Type 405"]
+    assert names(idx.search("Hafermilch")) == ["Haferdrink ungesüßt"]
+    assert names(idx.search("Balsamico-Essig")) == ["Balsamicoessig"]
+    assert names(idx.search("helle Misopaste")) == ["Miso/Sojabohnenpaste"]
+
+
+def test_compound_tails_only_match_names_that_open_with_them(tmp_path):
+    idx = mini_index(tmp_path, [("P3A1000", "Gin Tonic"), ("N4A1000", "Latte macchiato")])
+    assert idx.search("Tortelloni") == []

@@ -270,6 +270,27 @@ _SYNONYMS = {
     "blattspinat": "spinat",
     "staudensellerie": "bleichsellerie",
     "stangensellerie": "bleichsellerie",
+    # Pasta shapes are dried durum pasta, which BLS lists as Teigwaren.
+    "spaghetti": "teigwaren",
+    "penne": "teigwaren",
+    "rigatoni": "teigwaren",
+    "fusilli": "teigwaren",
+    "farfalle": "teigwaren",
+    "tagliatelle": "teigwaren",
+    "makkaroni": "teigwaren",
+    "lasagneplatten": "teigwaren",
+    "lasagneplatte": "teigwaren",
+    "mehl": "weizen mehl",
+    "hafermilch": "haferdrink",
+    "sojamilch": "sojadrink",
+    "misopaste": "miso",
+}
+
+# Two-word names BLS writes as one word or as another name. Keys are folded
+# tokens joined by a space.
+_PHRASES = {
+    "balsamico essig": "balsamicoessig",
+    "miso paste": "miso",
 }
 
 # Recipe food names carry words BLS never has ("gehackte Tomaten aus der Dose").
@@ -338,9 +359,12 @@ _PROCESSED = {
 
 
 def _tokens(query: str) -> list[str]:
+    words = " ".join(_fold(w) for w in _WORD.findall(query))
+    for phrase, replacement in _PHRASES.items():
+        words = words.replace(phrase, replacement)
     tokens: list[str] = []
-    for word in _WORD.findall(query):
-        tokens.extend(_SYNONYMS.get(_fold(word), _fold(word)).split())
+    for word in words.split():
+        tokens.extend(_SYNONYMS.get(word, word).split())
     return tokens
 
 
@@ -362,11 +386,18 @@ def _relaxed(tokens: list[str]) -> list[list[str]]:
     # German puts the noun last: "rote Zwiebel" -> "Zwiebel".
     for i in range(len(core)):
         out.append(core[i:])
-    last = core[-1]
-    # "Kirschtomaten" -> "tomaten": the head of a compound is its tail.
-    for i in range(2, len(last) - 3):
-        out.append([_SYNONYMS.get(last[i:], last[i:])])
     return [o for i, o in enumerate(out) if o != tokens and o not in out[:i]]
+
+
+def _compound_heads(tokens: list[str]) -> list[str]:
+    """ "Kirschtomaten" -> "tomaten": the head of a German compound is its tail.
+    A tail is often only the start of an unrelated word ("toni" in Tonic), so
+    the caller keeps only names that open with it."""
+    core = [t for t in tokens if t not in _FILLER and t not in _CANNED and len(t) > 2]
+    if not core:
+        return []
+    last = core[-1]
+    return [_SYNONYMS.get(last[i:], last[i:]) for i in range(2, len(last) - 3)]
 
 
 def _match_expr(tokens: list[str]) -> tuple[str, set[str]] | None:
@@ -393,6 +424,11 @@ def _match_expr(tokens: list[str]) -> tuple[str, set[str]] | None:
         parts.append("(" + " OR ".join(sorted(options)) + ")")
     heads |= {"".join(tokens)}
     return " AND ".join(parts), heads
+
+
+def _opens_with(name: str, heads: set[str]) -> bool:
+    words = _WORD.findall(_fold(name))
+    return any("".join(words[:k]) in heads for k in range(1, min(len(words), 3) + 1))
 
 
 def _candidate(row: sqlite3.Row) -> FoodCandidate:
@@ -433,13 +469,21 @@ class BlsIndex:
                 rows, heads = self._rows(loose)
                 if rows:
                     break
+        if not rows:
+            for head in _compound_heads(tokens):
+                rows, heads = self._rows(head.split())
+                # Only names that open with the tail count; a tail is often
+                # just the start of an unrelated word.
+                rows = [r for r in rows if _opens_with(r["name"], heads)]
+                if rows:
+                    break
 
         def rank(row: sqlite3.Row) -> tuple[bool, int, bool, int, str]:
             words = _WORD.findall(_fold(row["name"]))
             # Tier 0: the name opens with the queried word, as in "Linse rot reif"
             # for "Linsen" or "Hafer Flocken" for "Haferflocken". Tier 1: it only
             # starts with those letters, like "Linsenmehl". Tier 2: it merely contains them.
-            if any("".join(words[:k]) in heads for k in range(1, min(len(words), 3) + 1)):
+            if _opens_with(row["name"], heads):
                 tier = 0
             elif any("".join(words).startswith(h) for h in heads):
                 tier = 1
