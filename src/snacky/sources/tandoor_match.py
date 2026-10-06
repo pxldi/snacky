@@ -3,7 +3,9 @@
     python -m snacky.sources.tandoor_match match --bls bls.sqlite --out matches.csv
     python -m snacky.sources.tandoor_match apply matches.csv
 
-`match` writes one row per Tandoor food and BLS candidate. The reviewer puts
+`match` writes one row per Tandoor food and BLS candidate. Herbs, spices,
+salt and water, which BLS lacks, get candidates from `spices` (USDA FDC) first;
+their `bls_code` column holds `FDC <id>`. The reviewer puts
 `y` in the `ok` column of the right candidate and leaves the rest empty.
 `apply` writes only those rows. The nutrient values travel in the CSV, so
 `apply` needs no BLS file and writes exactly what the reviewer saw.
@@ -21,6 +23,7 @@ from typing import Protocol
 
 from snacky import config
 from snacky.model import FoodCandidate, Nutrients
+from snacky.sources import spices
 from snacky.sources.tandoor import TandoorClient, TandoorError, TandoorFood
 
 COLUMNS = [
@@ -55,7 +58,9 @@ def build_rows(
     for food in foods:
         if nutrient_type_ids <= food.properties.keys():
             continue
-        found = index.search(food.name, limit=candidates)
+        found = (spices.search(food.name, limit=candidates) + index.search(food.name, limit=candidates))[
+            :candidates
+        ]
         if not found:
             unmatched.append(food.name)
             continue
@@ -115,7 +120,7 @@ async def apply_rows(client: TandoorClient, rows: list[dict[str, str]]) -> list[
         n = _nutrients(r)
         await client.set_food_properties(int(r["food_id"]), n)
         lines.append(
-            f"{r['food_name']} <- BLS {r['bls_code']} {r['bls_name']}: "
+            f"{r['food_name']} <- {r['bls_code']} {r['bls_name']}: "
             f"{n.kcal:g} kcal, {n.protein_g:g} g protein, {n.fat_g:g} g fat, "
             f"{n.carbs_g:g} g carbs, fibre {_fmt(n.fibre_g) or 'n/a'} per 100 g"
         )
@@ -142,7 +147,7 @@ async def _match(bls: Path, out: Path) -> None:
     write_csv(rows, out)
     print(f"{len({r['food_id'] for r in rows})} foods with candidates -> {out}")
     for name in unmatched:
-        print(f"no BLS candidate: {name}", file=sys.stderr)
+        print(f"no candidate: {name}", file=sys.stderr)
 
 
 async def _apply(csv_path: Path) -> None:

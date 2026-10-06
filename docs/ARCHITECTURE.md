@@ -19,6 +19,9 @@ Snacky is one Python process that owns one SQLite file.
 | `snacky.sources.bls` | the BLS 4.0 index, built once at image build, read-only at runtime |
 | `snacky.sources.off` | Open Food Facts client |
 | `snacky.sources.tandoor` | Tandoor client: recipe nutrition, food properties |
+| `snacky.sources.spices` | FDC values for herbs, spices, salt and water, which BLS lacks |
+| `snacky.sources.tandoor_match` | CLI: BLS and spice candidates for Tandoor foods without nutrients, reviewed in a CSV |
+| `snacky.sources.tandoor_units` | CLI: gram conversions for recipe units Tandoor cannot count, reviewed in a CSV |
 | `snacky.sources.opengym` | openGym client: workouts, body weight |
 | `snacky.lookup` | the lookup order below: search, resolve a ref, resolve a barcode |
 | `snacky.mcp_server` | the MCP tools and the `/health` route; `create_mcp` builds the server, `create_mcp_app` its stateless HTTP app |

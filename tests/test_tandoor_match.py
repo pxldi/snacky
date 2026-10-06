@@ -113,3 +113,14 @@ def test_apply_with_nothing_approved_writes_nothing(tmp_path, capsys, monkeypatc
     monkeypatch.setattr(tm.config, "TANDOOR_URL", "")
     assert tm.main(["apply", str(path)]) == 0
     assert "Nothing written" in capsys.readouterr().out
+
+
+def test_spices_bls_lacks_get_fdc_candidates_first():
+    foods = [TandoorFood(201, "Kreuzkümmel gemahlen"), TandoorFood(202, "Test Lentils")]
+    rows, unmatched = tm.build_rows(foods, INDEX, IDS)
+    assert unmatched == []
+    assert [(r["food_id"], r["bls_code"], r["bls_name"]) for r in rows] == [
+        ("201", "FDC 170923", "Kreuzkümmel"),
+        ("202", "H100", "Linsen, getrocknet"),
+    ]
+    assert rows[0]["carbs_g"] == "33.74" and rows[0]["fibre_g"] == "10.5"

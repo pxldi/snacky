@@ -8,6 +8,11 @@ Licensed under CC BY 4.0, https://creativecommons.org/licenses/by/4.0/
 Changes: converted from the published xlsx into the SQLite index at
 /app/data/bls.sqlite, keeping the per-100 g nutrient values.
 
+USDA FoodData Central, SR Legacy, https://fdc.nal.usda.gov/
+U.S. Department of Agriculture, Agricultural Research Service (2019).
+Public domain (CC0 1.0). Values for herbs and spices that BLS lacks are
+copied into src/snacky/sources/spices.py, with fibre subtracted from carbohydrate.
+
 Open Food Facts, https://world.openfoodfacts.org/
 Product data is fetched at runtime and stored in the instance's own database.
 Licensed under the Open Database License (ODbL) v1.0,
