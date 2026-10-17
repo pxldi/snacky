@@ -49,9 +49,18 @@ product) before Open Food Facts.
 
 ## MCP tools
 
-`search_food`, `log_food`, `log_barcode`, `log_label`, `log_recipe_portion`,
+`search_food`, `log_food`, `log_foods`, `log_barcode`, `log_label`, `log_recipe_portion`,
 `log_estimate`, `day_summary`, `week_summary`, `update_entry`, `delete_entry`,
-`set_goal`, `add_serving`, `suggest_foods`, `log_again`, `recipe_nutrition`. Every logging result names the food's source.
+`set_goal`, `add_serving`, `suggest_foods`, `log_again`, `recipe_nutrition`,
+`log_body_weight`, `delete_body_weight`. Every logging result names the food's source.
+
+`log_foods` logs a meal of up to 50 components at one time. Each item is
+logged on its own and gets its own result, so one bad ref does not lose the
+rest of the meal.
+
+`log_body_weight` keeps one weigh-in per day in the `body_weights` table.
+`week_summary` lists those next to openGym's weigh-ins, each with its source,
+and does not merge them; openGym is only read, never written.
 
 `log_estimate` looks each plate item up by its `search_name` in stored foods
 and BLS first and uses the model's numbers only when nothing matches. It never

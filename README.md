@@ -43,7 +43,7 @@ skips BLS, with a warning. `/data` is the only path written at runtime.
 | `SNACKY_OFF_USER_AGENT` | `snacky/0.1 (+https://github.com/pxldi/snacky)` | sent to Open Food Facts |
 | `SNACKY_MCP_PORT`, `SNACKY_WEB_PORT` | `8000`, `8080` | listen ports |
 | `TANDOOR_URL`, `TANDOOR_TOKEN` | unset | enables `log_recipe_portion` |
-| `OPENGYM_URL`, `OPENGYM_TOKEN` | unset | adds training days and body weight to `week_summary` |
+| `OPENGYM_URL`, `OPENGYM_TOKEN` | unset | adds training days and openGym's weigh-ins to `week_summary` |
 | `IMAGE_SHA` | set by the image | the `build` value in `/health` |
 
 ## Data sources

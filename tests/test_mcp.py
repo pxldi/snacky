@@ -114,6 +114,9 @@ async def test_all_tools_are_listed_with_argument_descriptions(mcp):
         [
             "search_food",
             "log_food",
+            "log_foods",
+            "log_body_weight",
+            "delete_body_weight",
             "log_barcode",
             "log_label",
             "log_recipe_portion",
@@ -573,7 +576,7 @@ async def test_week_summary_adds_training_days_and_weights(mcp):
     assert by_day["2026-09-24"]["totals"]["kcal"] == 115.0 and by_day["2026-09-24"]["training"] is True
     assert by_day["2026-09-25"]["training"] is False
     assert [w["name"] for w in out["workouts"]] == ["Session A", "Session B"]
-    assert out["body_weights"] == [{"date": "2026-09-25", "kg": 70.5}]
+    assert out["body_weights"] == [{"date": "2026-09-25", "kg": 70.5, "source": "opengym"}]
     assert out["days_logged"] == 1 and out["average_per_logged_day"]["protein_g"] == 15.5
     assert out["notes"] == []
 
@@ -591,6 +594,59 @@ async def test_week_summary_drops_gym_fields_when_open_gym_fails(mcp):
 async def test_week_summary_without_open_gym(make):
     out = await call(make(with_gym=False), "week_summary")
     assert "workouts" not in out and out["notes"] == []
+
+
+# --- body weight and whole meals ----------------------------------------------
+
+
+@respx.mock
+async def test_body_weight_from_chat_shows_next_to_open_gym(mcp):
+    respx.get(f"{GYM}/api/data").respond(json=gym_state())
+    out = await call(mcp, "log_body_weight", kg=71.2)
+    assert out == {"logged": True, "date": "2026-09-29", "kg": 71.2}
+    await call(mcp, "log_body_weight", kg=70.9, date="2026-09-25")
+    await call(mcp, "log_body_weight", kg=70.8, date="2026-09-25")  # replaces the first
+    week = await call(mcp, "week_summary")
+    assert week["body_weights"] == [
+        {"date": "2026-09-25", "kg": 70.8, "source": "chat"},
+        {"date": "2026-09-25", "kg": 70.5, "source": "opengym"},
+        {"date": "2026-09-29", "kg": 71.2, "source": "chat"},
+    ]
+
+
+async def test_body_weight_without_open_gym_and_its_limits(make):
+    mcp = make(with_gym=False)
+    await call(mcp, "log_body_weight", kg=70, date="2026-09-28")
+    week = await call(mcp, "week_summary")
+    assert week["body_weights"] == [{"date": "2026-09-28", "kg": 70.0, "source": "chat"}]
+    await fails(mcp, "log_body_weight", "future", kg=70, date="2026-10-05")
+    await fails(mcp, "log_body_weight", "between 20 and 400", kg=7)
+    assert await call(mcp, "delete_body_weight", date="2026-09-28") == {
+        "date": "2026-09-28",
+        "status": "removed",
+    }
+    assert (await call(mcp, "delete_body_weight", date="2026-09-28"))["status"] == "already_removed"
+    assert "body_weights" not in await call(mcp, "week_summary")
+
+
+async def test_log_foods_logs_a_meal_and_reports_each_item(mcp):
+    out = await call(
+        mcp,
+        "log_foods",
+        items=[
+            {"food_ref": "bls:H861000", "grams": 100},
+            {"food_ref": "food:9999", "grams": 50},
+            {"food_ref": "bls:H861000", "serving": "1 Bowl"},
+            {"food_ref": "bls:H861000", "grams": 50},
+        ],
+        eaten_at="12:00",
+    )
+    assert (out["logged"], out["failed"]) == (2, 2)
+    assert [r["logged"] for r in out["results"]] == [True, False, False, True]
+    assert "9999" in out["results"][1]["error"] and "1 Bowl" in out["results"][2]["error"]
+    assert out["day_so_far"]["kcal"] == 172.5
+    day = await call(mcp, "day_summary")
+    assert sum(len(m["entries"]) for m in day["meals"]) == 2
 
 
 # --- corrections and goals ----------------------------------------------------
