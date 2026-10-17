@@ -19,6 +19,7 @@ from typing import Any
 
 from snacky import config
 from snacky.model import (
+    BodyWeight,
     Confidence,
     DaySummary,
     Entry,
@@ -118,6 +119,15 @@ _MIGRATIONS: tuple[str, ...] = (
         grams    REAL NOT NULL,
         label    TEXT NOT NULL,
         position INTEGER NOT NULL
+    );
+    """,
+    # Weigh-ins told to the assistant. openGym keeps its own log; this one is
+    # for a weight said in chat, one value per local day.
+    """
+    CREATE TABLE body_weights (
+        day       TEXT PRIMARY KEY,
+        kg        REAL NOT NULL,
+        logged_at TEXT NOT NULL
     );
     """,
 )
@@ -484,6 +494,33 @@ class Store:
                 (lo, hi),
             ).fetchall()
             return [_entry(row) for row in rows]
+
+    # Body weight
+
+    def set_body_weight(self, day: date, kg: float) -> BodyWeight:
+        """Record the weight for `day`, replacing an earlier value for that day."""
+        if not 20 <= kg <= 400:
+            raise ValueError("body weight must be between 20 and 400 kg")
+        with self._write() as db:
+            db.execute(
+                "INSERT OR REPLACE INTO body_weights (day, kg, logged_at) VALUES (?, ?, ?)",
+                (day.isoformat(), kg, _utc_text(datetime.now(UTC))),
+            )
+        return BodyWeight(day=day, kg=kg)
+
+    def delete_body_weight(self, day: date) -> bool:
+        """False when nothing was recorded for `day`."""
+        with self._write() as db:
+            return db.execute("DELETE FROM body_weights WHERE day = ?", (day.isoformat(),)).rowcount > 0
+
+    def body_weights_between(self, start: date, end: date) -> list[BodyWeight]:
+        """Weigh-ins with start <= day < end, oldest first."""
+        with self._read() as db:
+            rows = db.execute(
+                "SELECT day, kg FROM body_weights WHERE day >= ? AND day < ? ORDER BY day",
+                (start.isoformat(), end.isoformat()),
+            ).fetchall()
+            return [BodyWeight(day=date.fromisoformat(r["day"]), kg=r["kg"]) for r in rows]
 
     # Goals
 

@@ -65,7 +65,39 @@ def log(store, when, kcal=100.0, protein=10.0, source=Source.MANUAL, **kw):
 def test_migrate_is_idempotent(store):
     store.migrate()
     store.migrate()
-    assert store._db.execute("PRAGMA user_version").fetchone()[0] == 1
+    assert store._db.execute("PRAGMA user_version").fetchone()[0] == 2
+
+
+def test_a_version_1_database_upgrades_and_keeps_its_rows(tmp_path):
+    from snacky import store as store_module
+
+    path = tmp_path / "old.sqlite"
+    old = store_module._MIGRATIONS
+    store_module._MIGRATIONS = old[:1]
+    try:
+        first = Store(path)
+        made = first.upsert_food(food())
+        first.close()
+    finally:
+        store_module._MIGRATIONS = old
+    upgraded = Store(path)
+    assert upgraded._db.execute("PRAGMA user_version").fetchone()[0] == 2
+    assert upgraded.get_food(made.id) == made
+    upgraded.set_body_weight(date(2026, 9, 1), 70)
+    assert upgraded.body_weights_between(date(2026, 9, 1), date(2026, 9, 2))[0].kg == 70
+    upgraded.close()
+
+
+def test_body_weight_one_value_per_day(store):
+    store.set_body_weight(date(2026, 9, 1), 70.4)
+    store.set_body_weight(date(2026, 9, 1), 70.1)
+    store.set_body_weight(date(2026, 9, 3), 69.9)
+    got = store.body_weights_between(date(2026, 9, 1), date(2026, 9, 3))
+    assert [(b.day.day, b.kg) for b in got] == [(1, 70.1)]
+    assert store.delete_body_weight(date(2026, 9, 1)) is True
+    assert store.delete_body_weight(date(2026, 9, 1)) is False
+    with pytest.raises(ValueError):
+        store.set_body_weight(date(2026, 9, 2), 1000)
 
 
 def test_upsert_and_get_food(store):

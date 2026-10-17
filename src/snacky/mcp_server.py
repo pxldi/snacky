@@ -177,6 +177,16 @@ def _goal_dict(s: GoalStatus) -> dict[str, Any]:
     return out
 
 
+# The most components log_foods takes in one call.
+_MAX_MEAL_ITEMS = 50
+
+
+class MealItem(BaseModel):
+    food_ref: str = Field(description="A ref from search_food: food:<id>, bls:<code> or off:<barcode>.")
+    grams: float | None = Field(default=None, gt=0, description="Amount in grams. Give this or serving.")
+    serving: str | None = Field(default=None, description="A serving label the food has. Give this or grams.")
+
+
 class EstimateItem(BaseModel):
     name: str = Field(description="What is on the plate, in the user's words, e.g. 'Linsen-Dal'.")
     search_name: str = Field(
@@ -312,6 +322,81 @@ def create_mcp(
         the food's database entry, and the result names the source."""
         food = await lookup.by_ref(food_ref)
         return log_food_entry(food, grams, serving, eaten_at)
+
+    @mcp.tool()
+    @guarded(ValueError)
+    async def log_foods(
+        items: Annotated[
+            list[MealItem],
+            Field(
+                min_length=1,
+                max_length=_MAX_MEAL_ITEMS,
+                description="The meal's components, each from search_food.",
+            ),
+        ],
+        eaten_at: Annotated[
+            str | None,
+            Field(description="ISO datetime or HH:MM (local time) for the whole meal. Empty means now."),
+        ] = None,
+    ) -> dict:
+        """Log a meal of several foods in one call, e.g. a bowl of rice, tofu, vegetables and sauce.
+        Each item is logged on its own; one that fails (unknown ref, bad serving) is reported in
+        `results` and does not stop the others, so only the failed ones need another call."""
+        when = parse_when(eaten_at, clock()).isoformat()
+        results: list[dict[str, Any]] = []
+        for item in items:
+            try:
+                food = await lookup.by_ref(item.food_ref)
+                out = log_food_entry(food, item.grams, item.serving, when)
+                results.append({"food_ref": item.food_ref, "logged": True, "entry": out["entry"]})
+            except (
+                ToolError,
+                LookupFailed,
+                OffUnavailable,
+                httpx.HTTPStatusError,
+                NotFound,
+                ValueError,
+            ) as exc:
+                results.append({"food_ref": item.food_ref, "logged": False, "error": _describe(exc)})
+        day = store.day_summary(datetime.fromisoformat(when).astimezone(config.TZ).date())
+        return {
+            "logged": sum(r["logged"] for r in results),
+            "failed": sum(not r["logged"] for r in results),
+            "results": results,
+            "day_so_far": {
+                "date": day.day.isoformat(),
+                "kcal": _r(day.totals.kcal),
+                "protein_g": _r(day.totals.protein_g),
+            },
+        }
+
+    @mcp.tool()
+    @guarded(ValueError)
+    async def log_body_weight(
+        kg: Annotated[float, Field(gt=0, description="Body weight in kilograms.")],
+        date: Annotated[
+            str | None,
+            Field(description="YYYY-MM-DD. Empty means today. A second value for a day replaces the first."),
+        ] = None,
+    ) -> dict:
+        """Record a weigh-in told in chat. week_summary lists it next to openGym's weigh-ins."""
+        today = clock().astimezone(config.TZ).date()
+        day = _parse_day(date, today)
+        if day > today:
+            raise ToolError("That date is in the future.")
+        weight = store.set_body_weight(day, kg)
+        return {"logged": True, "date": weight.day.isoformat(), "kg": weight.kg}
+
+    @mcp.tool()
+    @guarded(ValueError)
+    async def delete_body_weight(
+        date: Annotated[str, Field(description="YYYY-MM-DD of the weigh-in to remove.")],
+    ) -> dict:
+        """Remove a weigh-in recorded with log_body_weight. openGym's own log is not touched. A day with
+        nothing recorded answers already_removed, so repeating the call is harmless."""
+        day = _parse_day(date, clock().astimezone(config.TZ).date())
+        removed = store.delete_body_weight(day)
+        return {"date": day.isoformat(), "status": "removed" if removed else "already_removed"}
 
     @mcp.tool()
     @guarded(LookupFailed, OffUnavailable, httpx.HTTPStatusError, NotFound, ValueError)
@@ -598,8 +683,9 @@ def create_mcp(
             Field(description="First day, YYYY-MM-DD. Empty means the last seven days ending today."),
         ] = None,
     ) -> dict:
-        """Seven days from `start` with totals and goal status per day. When openGym is set up it also
-        lists the training days and body weights of that week."""
+        """Seven days from `start` with totals and goal status per day, and the body weights of that
+        week (logged in chat, and from openGym when it is set up). With openGym it also lists the
+        training days."""
         today = clock().astimezone(config.TZ).date()
         first = _parse_day(start, today - timedelta(days=6))
         days = store.week_summary(first)
@@ -642,7 +728,13 @@ def create_mcp(
             out["workouts"] = [
                 {"date": w.day.isoformat(), "name": w.name, "duration_min": w.duration_min} for w in workouts
             ]
-            out["body_weights"] = [{"date": b.day.isoformat(), "kg": b.kg} for b in weights or []]
+        # Both logs are listed with their source rather than merged: a chat
+        # value and a scale reading on the same day can both be right.
+        logged_weights = store.body_weights_between(first, first + timedelta(days=7))
+        if weights is not None or logged_weights:
+            both = [(b, "chat") for b in logged_weights] + [(b, "opengym") for b in weights or []]
+            both.sort(key=lambda t: (t[0].day, t[1]))
+            out["body_weights"] = [{"date": b.day.isoformat(), "kg": b.kg, "source": src} for b, src in both]
         out["notes"] = notes
         return out
 
